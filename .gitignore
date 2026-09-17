@@ -1,0 +1,13 @@
+data/raw/
+data/processed/
+*.tar.gz
+*.parquet
+*.npy
+__pycache__/
+.ipynb_checkpoints/
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.pdf
+.venv/
