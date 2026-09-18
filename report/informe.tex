@@ -60,7 +60,8 @@
 \rule{\textwidth}{1.2pt}\\[2cm]
 
 {\large\textbf{Estudiante}}\\[0.3cm]
-{\large Diego Raúl Rivas Huanca}\\[2cm]
+{\large Diego Raúl Rivas Huanca}\\
+{\large Guerra Chura Joan Leonard}\\[2cm]
 
 {\large\textbf{Docente}}\\[0.3cm]
 {\large Ana María Cuadros Valdivia}\\[2cm]
@@ -177,18 +178,18 @@ Las hipótesis surgen de tres fuentes:
 \subsection{Hipótesis formuladas como preguntas}
 
 \begin{description}[leftmargin=0pt,style=nextline]
-  \item[Hipótesis 1 — Confluencia visual entre clases]
+  \item[Hipótesis 1 : Confluencia visual entre clases]
   ¿Existen clusters del dendrograma que agrupan imágenes de clases semánticamente
   distintas, y ese agrupamiento es explicable mediante características visuales
   cuantificables (brillo, contraste, saturación, entropía, densidad de bordes,
   color dominante)?
 
-  \item[Hipótesis 2 — Divergencia visual dentro de una clase]
+  \item[Hipótesis 2 : Divergencia visual dentro de una clase]
   ¿Una misma clase de CIFAR-10 se fragmenta en subgrupos visualmente diferenciados,
   de modo que la etiqueta semántica oculta más de un patrón visual? Si es así,
   ¿qué características separan a esos subgrupos con mayor poder discriminante?
 
-  \item[Hipótesis 3 — Ambigüedad humana y calidad visual]
+  \item[Hipótesis 3 : Ambigüedad humana y calidad visual]
   ¿Las imágenes con mayor desacuerdo entre anotadores humanos (entropía de la
   distribución de votos en CIFAR-10H) se concentran en clusters específicos y
   presentan un perfil de características visuales distinto (menor contraste,
@@ -437,14 +438,14 @@ de la celda correspondiente del \emph{notebook}.
 \texttt{img\_id} & Identificador único de la imagen & Nominal (clave) & 0 (0\%) & 60\,000 únicos & --- & --- & Unión entre tablas \\
 \texttt{clase} & Etiqueta semántica asignada por anotadores & Categórico nominal & 0 (0\%) & 10 valores & --- & Uniforme: 6\,000 por clase & H1, H2 \\
 \texttt{split} & Partición original & Categórico nominal & 0 (0\%) & train / test & --- & 50\,000 / 10\,000 & Cruce con CIFAR-10H \\
-\texttt{brillo} & Media del canal V (HSV) & Numérico continuo & \emph{[completar]} & $[0,1]$ & normalizado & \emph{[media, mediana, $\sigma$, IQR]} & H1, H2, H3 \\
-\texttt{contraste} & Desviación estándar de la luminancia & Numérico continuo & \emph{[completar]} & $[0,\sim0.5]$ & normalizado & \emph{[completar]} & H1, H2, H3 \\
-\texttt{saturacion} & Media del canal S (HSV) & Numérico continuo & \emph{[completar]} & $[0,1]$ & normalizado & \emph{[completar]} & H1, H2 \\
-\texttt{entropia} & Entropía de Shannon del histograma de grises & Numérico continuo & \emph{[completar]} & $[0,8]$ & bits & \emph{[completar]} & H1, H3 \\
-\texttt{densidad\_bordes} & Proporción de píxeles de borde (Canny) & Numérico continuo & \emph{[completar]} & $[0,1]$ & proporción & \emph{[completar]} & H1, H2 \\
-\texttt{tono\_dominante} & Modo del canal H (HSV), discretizado en 12 sectores & Categórico ordinal & \emph{[completar]} & 12 sectores & grados & \emph{[completar]} & H1 \\
-\texttt{unif\_fondo} & $\sigma$ de la banda perimetral de 4 px & Numérico continuo & \emph{[completar]} & $[0,\sim0.5]$ & normalizado & \emph{[completar]} & H2 \\
-\texttt{energia\_central} & Razón entre varianza del centro $16{\times}16$ y del total & Numérico continuo & \emph{[completar]} & $[0,\sim3]$ & razón & \emph{[completar]} & H2, H3 \\
+\texttt{brillo} & Media del canal V (HSV) & Numérico continuo & 0 (0\%) & $[0.05, 0.99]$ & normalizado & $\bar{x}=0.540$, $\tilde{x}=0.535$, $\sigma=0.128$, IQR$=0.164$ (asim. 0.12) & H1, H2, H3 \\
+\texttt{contraste} & Desviación estándar de la luminancia & Numérico continuo & 0 (0\%) & $[0.02, 0.45]$ & normalizado & $\bar{x}=0.196$, $\tilde{x}=0.195$, $\sigma=0.060$, IQR$=0.084$ (asim. 0.17) & H1, H2, H3 \\
+\texttt{saturacion} & Media del canal S (HSV) & Numérico continuo & 0 (0\%) & $[0.00, 0.98]$ & normalizado & $\bar{x}=0.274$, $\tilde{x}=0.255$, $\sigma=0.141$, IQR$=0.185$ (asim. 0.73) & H1, H2 \\
+\texttt{entropia} & Entropía de Shannon del histograma de grises & Numérico continuo & 0 (0\%) & $[0.81, 7.79]$ & bits & $\bar{x}=6.950$, $\tilde{x}=7.091$, $\sigma=0.579$, IQR$=0.587$ (asim. $-2.23$) & H1, H3 \\
+\texttt{densidad\_bordes} & Proporción de píxeles de borde (Sobel) & Numérico continuo & 0 (0\%) & $[0.04, 0.99]$ & proporción & $\bar{x}=0.812$, $\tilde{x}=0.856$, $\sigma=0.144$, IQR$=0.161$ (asim. $-1.63$) & H1, H2 \\
+\texttt{tono\_dominante} & Modo del canal H (HSV), discretizado en 12 sectores, entre píxeles con saturación $>0.15$ & Categórico ordinal & \emph{[completar: \% acromáticas]} & 12 sectores & grados & \emph{[completar: moda]} & H1 \\
+\texttt{unif\_fondo} & $\sigma$ de la banda perimetral de 4 px & Numérico continuo & 0 (0\%) & $[0.00, 0.44]$ & normalizado & $\bar{x}=0.176$, $\tilde{x}=0.173$, $\sigma=0.070$, IQR$=0.098$ (asim. 0.25) & H2 \\
+\texttt{energia\_central} & Razón entre varianza del centro $16{\times}16$ y del total & Numérico continuo & 0 (0\%) & $[0.00, 3.83]$ & razón & $\bar{x}=0.965$, $\tilde{x}=0.897$, $\sigma=0.481$, IQR$=0.604$ (asim. 1.04) & H2, H3 \\
 \texttt{cluster\_k8} & Cluster asignado con $k=8$ & Categórico nominal & 0 (0\%) & 8 valores & --- & \emph{[completar]} & H1, H2, H3 \\
 \texttt{cluster\_k18} & Cluster asignado con $k=18$ & Categórico nominal & 0 (0\%) & 18 valores & --- & \emph{[completar]} & H1, H2 \\
 \texttt{entropia\_humana} & Entropía de la distribución de votos (CIFAR-10H) & Numérico continuo & \emph{[solo test]} & $[0,\log_2 10]$ & bits & \emph{[completar]} & H3 \\
@@ -525,28 +526,42 @@ Tabla~\ref{tab:correlaciones}.
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}llccp{5.5cm}@{}}
+\begin{tabular}{@{}llccp{5.2cm}@{}}
 \toprule
 \textbf{Variable A} & \textbf{Variable B} & \textbf{Pearson} & \textbf{Spearman} & \textbf{Lectura} \\
 \midrule
-entropia & densidad\_bordes & \emph{[compl.]} & \emph{[compl.]} & Relación esperada positiva y posiblemente no lineal \\
-brillo & contraste & \emph{[compl.]} & \emph{[compl.]} & \emph{[completar]} \\
-saturacion & brillo & \emph{[compl.]} & \emph{[compl.]} & \emph{[completar]} \\
-unif\_fondo & densidad\_bordes & \emph{[compl.]} & \emph{[compl.]} & \emph{[completar]} \\
-energia\_central & contraste & \emph{[compl.]} & \emph{[compl.]} & \emph{[completar]} \\
+entropia & densidad\_bordes & $+0.770$ & $+0.630$ & Relación positiva fuerte y esperada; la brecha Pearson--Spearman ($0.14$) indica que parte de la asociación no es estrictamente lineal \\
+unif\_fondo & densidad\_bordes & $+0.273$ & $+0.176$ & Positiva pero débil: un fondo no uniforme se asocia moderadamente con mayor densidad de bordes, no de forma determinista \\
+energia\_central & contraste & $-0.428$ & $-0.395$ & Negativa moderada e inesperada: cuando la estructura se concentra en el centro de la imagen, el contraste global tiende a ser \emph{menor}, no mayor \\
+saturacion & brillo & $-0.195$ & $-0.198$ & Negativa débil; imágenes más brillantes tienden levemente a estar menos saturadas (efecto de sobreexposición) \\
+brillo & contraste & $+0.099$ & $+0.109$ & Prácticamente nula: ambas variables varían de forma esencialmente independiente \\
 \bottomrule
 \end{tabular}
-\caption{Correlaciones más relevantes entre características visuales.}
+\caption{Correlaciones más relevantes entre características visuales, calculadas
+sobre las 60\,000 imágenes de CIFAR-10.}
 \label{tab:correlaciones}
 \end{table}
 
-\paragraph{Relaciones inesperadas.} \emph{[Documentar aquí cualquier par de
-variables cuya correlación contradiga la expectativa del dominio; siguiendo la
-lección del cuarteto de Anscombe, todo coeficiente se acompaña del scatterplot
-correspondiente antes de interpretarlo.]}
+\paragraph{Relaciones inesperadas.} La correlación negativa entre
+\texttt{energia\_central} y \texttt{contraste} ($\rho_{\text{Pearson}}=-0.428$)
+no era la esperada: se anticipaba que un objeto central bien definido (alta
+\texttt{energia\_central}) coincidiera con mayor contraste global, no con menor.
+Una lectura plausible es que las imágenes con fondos muy texturizados elevan el
+contraste \emph{global} sin que el objeto central concentre esa variación,
+mientras que las imágenes con un objeto central nítido sobre un fondo liso
+mantienen baja varianza fuera del centro y, por tanto, contraste global menor.
+Antes de aceptar esta lectura, esta relación se inspeccionó mediante scatterplot
+(incluido en el pair plot de la Figura~\ref{fig:pairplot}) para descartar que
+fuera un artefacto de unos pocos puntos extremos, siguiendo la lección del
+cuarteto de Anscombe.
 
-\paragraph{Variables aparentemente independientes.} \emph{[Completar tras el
-análisis.]}
+\paragraph{Variables aparentemente independientes.} \texttt{brillo} y
+\texttt{contraste} muestran una correlación prácticamente nula
+($\rho_{\text{Pearson}}=+0.099$, $\rho_{\text{Spearman}}=+0.109$): el nivel de
+iluminación de una imagen de CIFAR-10 no predice su nivel de contraste. Esto es
+relevante para el diseño de la herramienta de Visual Analytics: ambas variables
+aportan información no redundante y ninguna puede usarse como sustituto de la
+otra.
 
 %=====================  7. PROBLEMAS Y TRANSFORMACIONES  =============
 \section{Problemas identificados y transformaciones (data wrangling)}
@@ -560,9 +575,15 @@ análisis.]}
   \item \textbf{Ausencia total de atributos.} Salvo la etiqueta, no existe
   ninguna variable sobre la cual filtrar, agrupar u ordenar. Este es el problema
   estructural del dataset.
-  \item \textbf{Imágenes duplicadas y casi-duplicadas.} La literatura reporta
-  solapamientos entre los conjuntos de entrenamiento y prueba de CIFAR, herencia
-  de la recolección automática desde buscadores web.
+  \item \textbf{Posibles imágenes duplicadas o casi-duplicadas.} La literatura
+  reporta solapamientos entre los conjuntos de entrenamiento y prueba de CIFAR,
+  herencia de la recolección automática desde buscadores web. Una búsqueda por
+  \emph{hash} MD5 exacto sobre las 60\,000 imágenes no encontró ningún
+  duplicado bit-idéntico, lo cual es esperable: el fenómeno reportado en la
+  literatura corresponde a \emph{casi}-duplicados (recortes, reescalados o
+  recompresiones de una misma imagen de origen), no a copias exactas. Detectar
+  esos casos requeriría un \emph{hash} perceptual (p.\,ej.\ \emph{difference
+  hashing}), que queda fuera del alcance de esta etapa.
   \item \textbf{Errores de etiquetado.} Trabajos de auditoría sobre
   \emph{benchmarks} han documentado etiquetas incorrectas en los conjuntos de
   prueba de CIFAR. CIFAR-10H permite detectarlos indirectamente mediante el
@@ -600,10 +621,10 @@ análisis.]}
 \endhead
 (1) Formato serializado & Deserialización y \texttt{transpose} a formato HWC; volcado a Parquet & Parquet permite lectura columnar rápida y preserva tipos & Tabla única reproducible \\
 (2) Ausencia de atributos & \emph{Feature engineering}: creación de 8 variables visuales interpretables & Dotar al dataset de atributos sobre los cuales aplicar operaciones tabulares & De 1 a 9 atributos por imagen \\
-(3) Duplicados & Detección por \emph{hash} perceptual y eliminación/marcado & Los duplicados inflan artificialmente el tamaño de los clusters & \emph{[completar: n eliminados]} \\
+(3) Duplicados & Detección por \emph{hash} MD5 exacto sobre el tensor de píxeles & Los duplicados exactos inflarían artificialmente el tamaño de los clusters & 0 encontrados sobre 60\,000 imágenes \\
 (5) Escalas heterogéneas & Estandarización $z$-score sobre las variables continuas & Evita que una variable domine las distancias por su rango & Variables comparables \\
 (6) Valores atípicos & Marcado (no eliminación) mediante criterio $1.5\,IQR$ & Los extremos son informativos: señalan imágenes de baja calidad, que interesan al análisis & Columna \texttt{es\_atipico} \\
-(7) Imágenes degeneradas & Eliminación de registros con varianza nula & No aportan información y distorsionan los estadísticos & \emph{[completar]} \\
+(7) Imágenes degeneradas & Marcado de registros con contraste $<10^{-3}$ (varianza casi nula) & No aportan información y distorsionan los estadísticos & 0 encontradas sobre 60\,000 imágenes \\
 (8) Redundancia & Análisis de correlación previo a cualquier reducción; PCA solo con fines de visualización & Conservar la interpretabilidad es el objetivo del trabajo & Conjunto reducido justificado \\
 (9) Desalineación de índices & Unión explícita por \texttt{img\_id} y validación cruzada con la clase mayoritaria & Una unión posicional produciría un cruce silenciosamente incorrecto & Unión verificada \\
 --- & Discretización de \texttt{tono\_dominante} en 12 sectores & Facilita el análisis categórico y el futuro filtrado en la interfaz & Variable ordinal \\
@@ -636,8 +657,13 @@ más de una clase semántica.}
 \label{fig:h1a}
 \end{figure}
 
-\emph{Descripción e interpretación.} \emph{[Describir aquí qué clusters concentran
-más de una clase y en qué proporción.]}
+\emph{Descripción e interpretación.} Con $k=8$ clusters, la pureza (proporción de
+la clase mayoritaria dentro del cluster) va de $0.93$ en el cluster más
+homogéneo hasta $0.43$ en el más mixto. Tres clusters caen por debajo del
+umbral de $0.6$: el 3 (pureza $0.427$), el 6 (pureza $0.456$) y el 5 (pureza
+$0.491$). En conjunto reúnen una fracción considerable del dataset y mezclan
+clases sin relación semántica evidente entre sí, lo que descarta que el
+agrupamiento se explique trivialmente por similitud de etiqueta.
 
 \begin{figure}[H]
 \centering
@@ -648,11 +674,24 @@ dentro del cluster (color) y en el dataset completo (gris).}
 \label{fig:h1b}
 \end{figure}
 
-\emph{Descripción e interpretación.} \emph{[Indicar qué características separan a
-los clusters mixtos y con qué magnitud de efecto.]}
+\emph{Descripción e interpretación.} El tamaño del efecto ($d$ de Cohen) entre los
+clusters mixtos $\{3,5,6\}$ y el resto del dataset es mayor para
+\texttt{unif\_fondo} ($d=+0.490$), \texttt{densidad\_bordes} ($d=+0.476$) y
+\texttt{entropia} ($d=+0.465$), seguidos de \texttt{contraste} ($d=+0.432$) y
+\texttt{energia\_central} ($d=-0.368$). Todos son efectos de magnitud media según
+la convención de Cohen. La lectura conjunta es consistente: las imágenes que
+confluyen entre clases distintas comparten fondos poco uniformes, mayor
+densidad de bordes y mayor entropía --- es decir, comparten \emph{complejidad
+visual}, no una paleta de color ni una clase semántica particular.
 
-\paragraph{Conclusión intermedia H1.} \emph{[Completar: se confirma / se confirma
-parcialmente / se refuta, con la evidencia numérica que la sustenta.]}
+\paragraph{Conclusión intermedia H1.} \textbf{Se confirma.} Existen clusters del
+dendrograma ($k=8$) que agrupan imágenes de clases semánticamente distintas
+(pureza $<0.6$ en 3 de 8 clusters), y ese agrupamiento resulta explicable
+mediante características visuales cuantificables: los clusters mixtos se
+distinguen del resto principalmente por mayor \texttt{unif\_fondo},
+\texttt{densidad\_bordes} y \texttt{entropia}, con tamaños de efecto medios
+($d\approx 0.4$--$0.5$). Las clases confluyen cuando comparten complejidad de
+fondo y textura, no necesariamente color o forma del objeto.
 
 \subsection{Hipótesis 2: divergencia visual dentro de una clase}
 
@@ -674,9 +713,20 @@ que mejor los separan.}
 \label{fig:h2b}
 \end{figure}
 
-\emph{Descripción e interpretación.} \emph{[Completar.]}
+\emph{Descripción e interpretación.} La clase con mayor entropía de distribución
+sobre los 18 clusters ---y por tanto la más fragmentada visualmente--- es
+\emph{bird}. A diferencia de clases con una pose y encuadre más homogéneos
+(p.\,ej.\ \emph{automobile}), las aves aparecen en vuelo, posadas, sobre fondos
+de cielo, agua o follaje, y a escalas muy distintas dentro del cuadro, lo cual
+explica que su distribución sobre los clusters sea más pareja en lugar de
+concentrarse en uno o dos.
 
-\paragraph{Conclusión intermedia H2.} \emph{[Completar.]}
+\paragraph{Conclusión intermedia H2.} \textbf{Se confirma.} Al menos una clase
+de CIFAR-10 --- \emph{bird} --- se fragmenta en múltiples subgrupos visualmente
+diferenciados en lugar de concentrarse en un único cluster, lo que indica que su
+etiqueta semántica agrupa patrones visuales heterogéneos. Esto valida que la
+partición por clase y la partición por cluster capturan estructuras distintas y
+complementarias del dataset.
 
 \subsection{Hipótesis 3: ambigüedad humana y calidad visual}
 
@@ -698,10 +748,46 @@ ambigüedad a través de los clusters.}
 \label{fig:h3b}
 \end{figure}
 
-\emph{Descripción e interpretación.} \emph{[Completar, reportando el coeficiente
-de Spearman entre \texttt{entropia\_humana} y cada característica.]}
+\emph{Descripción e interpretación.} Sobre las 10\,000 imágenes del conjunto de
+prueba, la correlación de Spearman entre \texttt{entropia\_humana} y cada
+característica visual resultó, en todos los casos, débil:
 
-\paragraph{Conclusión intermedia H3.} \emph{[Completar.]}
+\begin{center}
+\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Característica} & \textbf{Spearman $\rho$} & \textbf{$p$-valor} \\
+\midrule
+brillo             & $-0.089$ & $5.6\times10^{-19}$ \\
+densidad\_bordes   & $+0.067$ & $1.6\times10^{-11}$ \\
+contraste          & $-0.081$ & $4.4\times10^{-16}$ \\
+unif\_fondo        & $-0.057$ & $1.1\times10^{-8}$ \\
+energia\_central   & $+0.044$ & $8.8\times10^{-6}$ \\
+entropia           & $-0.025$ & $1.3\times10^{-2}$ \\
+saturacion         & $-0.005$ & $0.614$ (no significativo) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Con $n=10\,000$, incluso correlaciones de magnitud trivial ($|\rho|<0.1$)
+resultan estadísticamente significativas; esto es un ejemplo directo de la
+distinción --- vista en el Aula 03 con el cuarteto de Anscombe --- entre
+significancia estadística y relevancia práctica. La característica con mayor
+asociación es \texttt{brillo} ($\rho=-0.089$): imágenes ligeramente más oscuras
+tienden a generar algo más de desacuerdo entre anotadores humanos, pero el
+efecto es demasiado pequeño para ser explicativo por sí solo.
+\texttt{saturacion} no muestra relación alguna ($p=0.614$).
+
+\paragraph{Conclusión intermedia H3.} \textbf{No se confirma.} Las
+características visuales de bajo nivel usadas en este trabajo no explican de
+forma sustancial la ambigüedad percibida por humanos: todas las correlaciones
+de Spearman están por debajo de $|\rho|=0.09$. La ambigüedad humana en
+CIFAR-10 parece depender de factores que estas ocho variables no capturan ---
+plausiblemente de naturaleza semántica (p.\,ej.\ confusión entre \emph{cat} y
+\emph{dog}, o entre \emph{automobile} y \emph{truck}) antes que perceptual de
+bajo nivel. Este resultado, aunque negativo, es informativo: descarta una
+hipótesis razonable y redirige la pregunta hacia una comparación a nivel de
+\emph{clase confundida} más que de píxel, que queda como línea futura.
 
 \subsection{Panel resumen}
 
@@ -719,21 +805,51 @@ humana y características visuales, en una sola vista.}
 
 \subsection{Resumen del conocimiento obtenido}
 
-\emph{[Sintetizar en un párrafo qué se aprendió sobre la estructura del dataset.]}
+CIFAR-10 carece de atributos nativos más allá de la etiqueta de clase, pero al
+dotarlo de ocho características visuales interpretables emergen dos estructuras
+que la clase semántica por sí sola no revela: primero, existen agrupamientos
+jerárquicos que reúnen imágenes de clases distintas cuando comparten
+complejidad de fondo y textura (H1); segundo, al menos una clase (\emph{bird})
+se fragmenta internamente en subgrupos visualmente diferenciados que la
+etiqueta única oculta (H2). En cambio, la ambigüedad que perciben los
+anotadores humanos --- medida de forma independiente en CIFAR-10H --- no se
+explica por estas características de bajo nivel (H3), lo que sugiere que la
+confusión humana opera a un nivel semántico que el análisis de píxeles no
+alcanza a capturar. El dataset resultó además de alta calidad técnica: sin
+duplicados exactos ni imágenes degeneradas, con un 10.01\,\% de registros
+marcados como atípicos en al menos una característica.
 
 \subsection{Respuesta final a cada hipótesis}
 
 \begin{itemize}[leftmargin=*]
-  \item \textbf{H1.} \emph{[Respuesta con evidencia.]}
-  \item \textbf{H2.} \emph{[Respuesta con evidencia.]}
-  \item \textbf{H3.} \emph{[Respuesta con evidencia.]}
+  \item \textbf{H1 --- Confluencia visual entre clases: se confirma.} Tres de
+  ocho clusters ($k=8$) tienen pureza $<0.6$ y se distinguen del resto del
+  dataset por mayor \texttt{unif\_fondo}, \texttt{densidad\_bordes} y
+  \texttt{entropia} (tamaños de efecto $d\approx0.4$--$0.5$).
+  \item \textbf{H2 --- Divergencia visual dentro de una clase: se confirma.}
+  \emph{bird} es la clase más fragmentada ($k=18$), con subgrupos visualmente
+  distinguibles por brillo, contraste y uniformidad de fondo.
+  \item \textbf{H3 --- Ambigüedad humana y calidad visual: no se confirma.}
+  Ninguna característica visual correlaciona de forma relevante con la entropía
+  de los votos humanos de CIFAR-10H ($|\rho_{\text{Spearman}}|<0.09$ en los
+  siete casos).
 \end{itemize}
 
 \subsection{Principales sorpresas y desafíos}
 
-\emph{[Documentar especialmente los hallazgos de calidad de datos: duplicados,
-etiquetas dudosas, características que resultaron menos informativas de lo
-esperado.]}
+La mayor sorpresa fue negativa: se esperaba encontrar duplicados o
+casi-duplicados dada la recolección automática de CIFAR desde buscadores web,
+pero la búsqueda por \emph{hash} exacto no encontró ninguno, es un recordatorio
+de que ese método solo detecta copias bit-idénticas, no recortes o
+recompresiones de un mismo origen. La segunda sorpresa fue el refuerzo de H3:
+se anticipaba que imágenes de baja calidad visual (bajo contraste, alta
+entropía) generarían más desacuerdo humano, y el efecto resultó, en la
+práctica, inexistente. El principal desafío técnico fue de escala: el
+\emph{clustering} aglomerativo es $O(n^2)$ en memoria, lo que obligó a trabajar
+con una submuestra estratificada de 10\,000 imágenes para las secciones que
+dependen de \emph{embeddings} y clusters (H1, H2), mientras que las
+características visuales de bajo nivel sí se calcularon sobre el dataset
+completo (60\,000 imágenes).
 
 \subsection{Puente hacia Visual Analytics}
 \label{sec:puente}
@@ -761,9 +877,16 @@ que se desarrollará en la siguiente etapa del curso:
   and linking}.
 \end{enumerate}
 
-Los aspectos prioritarios para la exploración interactiva, según lo encontrado,
-son: \emph{[completar con los dos comportamientos que resultaron mejor
-sustentados por el AED]}.
+Los dos comportamientos mejor sustentados por el análisis exploratorio, y por
+tanto prioritarios para la exploración interactiva, son la \textbf{confluencia
+visual entre clases} (H1) y la \textbf{divergencia visual dentro de una clase}
+(H2). Ambos son consecuencia directa de complementar la estructura jerárquica
+de \textsc{DendroMap} con atributos interpretables, y ninguno de los dos es
+analizado directamente en el artículo original. La hipótesis de ambigüedad
+humana (H3), al resultar refutada con la evidencia disponible, se documenta
+como hallazgo negativo y se deja como pregunta abierta para una futura
+comparación a nivel semántico (pares de clases confundidas) en lugar de a nivel
+de píxel.
 
 %=====================  10. REFERENCIAS  =============================
 \section{Referencias}
