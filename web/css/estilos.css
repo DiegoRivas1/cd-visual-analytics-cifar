@@ -1,0 +1,75 @@
+:root {
+  --borde: #ddd;
+  --fondo-panel: #fafafa;
+  --texto-tenue: #666;
+  --acento: #1f77b4;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; color: #222; }
+
+header {
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid var(--borde);
+}
+header h1 { margin: 0; font-size: 1.3rem; }
+.subtitulo { margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--texto-tenue); }
+.subtitulo a { color: var(--acento); }
+
+#cuerpo {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  height: calc(100vh - 64px);
+}
+
+#barra-lateral {
+  border-right: 1px solid var(--borde);
+  padding: 0.8rem;
+  overflow-y: auto;
+  background: var(--fondo-panel);
+}
+#barra-lateral h2 { font-size: 0.9rem; text-transform: uppercase; color: var(--texto-tenue); margin: 1rem 0 0.4rem; }
+#barra-lateral label { display: block; font-size: 0.8rem; margin-top: 0.6rem; }
+#barra-lateral input[type="range"] { width: 100%; }
+#boton-volver {
+  margin-top: 0.8rem; width: 100%; padding: 0.4rem;
+  border: 1px solid var(--acento); background: white; color: var(--acento);
+  border-radius: 4px; cursor: pointer;
+}
+#boton-volver:hover { background: var(--acento); color: white; }
+.dato-total { font-size: 0.8rem; color: var(--texto-tenue); margin-top: 1rem; }
+
+#treemap { position: relative; overflow: hidden; }
+#treemap svg { width: 100%; height: 100%; display: block; }
+
+.cluster text.etiqueta-cluster { pointer-events: none; }
+.miniatura { background-repeat: no-repeat; image-rendering: pixelated; }
+
+#panel-caracteristicas {
+  border-left: 1px solid var(--borde);
+  padding: 0.8rem;
+  overflow-y: auto;
+  background: var(--fondo-panel);
+}
+#panel-caracteristicas h3 { font-size: 0.85rem; margin: 0 0 0.6rem; }
+.panel-vacio { font-size: 0.8rem; color: var(--texto-tenue); }
+.celda-hist { margin-bottom: 0.4rem; }
+.celda-hist svg { width: 100%; height: auto; display: block; }
+
+.filtro { margin-bottom: 0.7rem; font-size: 0.78rem; }
+.filtro label { display: block; font-weight: 600; margin-bottom: 0.1rem; }
+.filtro input[type="range"] { width: 100%; }
+.valor-filtro { color: var(--texto-tenue); font-size: 0.7rem; }
+.boton-reset {
+  width: 100%; padding: 0.35rem; margin-top: 0.4rem;
+  border: 1px solid var(--borde); background: white; border-radius: 4px; cursor: pointer;
+}
+
+.error-carga { padding: 2rem; max-width: 640px; }
+.error-carga code { background: #eee; padding: 0.1rem 0.3rem; border-radius: 3px; }
+
+@media (max-width: 900px) {
+  #cuerpo { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; height: auto; }
+}

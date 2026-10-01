@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Visual Analytics CIFAR-10</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Exploración Visual de CIFAR-10</h1>
+      <p class="subtitulo">
+        Clustering jerárquico + características visuales cuantificables
+        complemento de <a href="https://div-lab.github.io/dendromap/" target="_blank" rel="noopener">DendroMap</a>
+      </p>
+    </header>
+
+    <div id="cuerpo">
+      <aside id="barra-lateral">
+        <section id="controles">
+          <h2>Controles</h2>
+          <label for="slider-k">Nivel de abstracción (k clusters)</label>
+          <input id="slider-k" type="range" min="2" max="40" value="8" />
+          <span id="valor-k">8</span>
+
+          <label for="slider-lado">Tamaño de miniatura (px)</label>
+          <input id="slider-lado" type="range" min="16" max="48" value="32" />
+
+          <button id="boton-volver">Volver a la vista completa</button>
+
+          <p class="dato-total">Total de imágenes: <strong id="total-imagenes">—</strong></p>
+        </section>
+
+        <section id="panel-filtros">
+          <h2>Filtros por característica</h2>
+        </section>
+      </aside>
+
+      <main id="treemap" aria-label="Treemap jerárquico de clusters"></main>
+
+      <aside id="panel-caracteristicas" aria-label="Perfil de características del cluster seleccionado"></aside>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script src="js/enlace.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/treemap.js"></script>
+  <script src="js/panel_caracteristicas.js"></script>
+  <script src="js/filtros.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
