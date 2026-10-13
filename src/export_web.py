@@ -41,6 +41,12 @@ VARS_NUM = [
     "densidad_bordes", "unif_fondo", "energia_central",
 ]
 
+# Variables categóricas: viajan en el JSON pero NO entran en VARS_NUM, porque
+# los histogramas continuos (d3.bin) y los sliders de rango no aplican. El
+# panel las dibuja como barras por categoría (ver web/js/categorias.js).
+# tono_dominante: 12 sectores de matiz (0..11) y -1 = imagen acromática.
+VARS_CAT = ["tono_dominante"]
+
 
 # --------------------------------------------------------------------------
 # 1. Árbol del dendrograma -> JSON anidado
@@ -152,6 +158,9 @@ def construir_metadatos(dsub, posiciones_sprite: list[dict], lado: int) -> list[
         }
         for v in VARS_NUM:
             reg[v] = round(float(fila[v]), 4)
+        for v in VARS_CAT:
+            if v in cols_dsub:
+                reg[v] = int(fila[v])
         for extra in ("cluster_k8", "cluster_k18", "entropia_humana", "consenso"):
             if extra in cols_dsub and pd_notna(fila.get(extra)):
                 reg[extra] = round(float(fila[extra]), 4) if extra != "cluster_k8" and extra != "cluster_k18" else int(fila[extra])
@@ -209,6 +218,9 @@ def exportar_todo(Z, dsub, imagenes_submuestra, ruta_salida, lado_miniatura: int
         }
         for v in VARS_NUM:
             reg[v] = round(float(fila[v]), 4)
+        for v in VARS_CAT:
+            if v in dsub.columns:
+                reg[v] = int(fila[v])
         registros_hoja.append(reg)
 
     print("construyendo árbol del dendrograma...")
@@ -247,6 +259,8 @@ def _pruebas() -> None:
     })
     for v in VARS_NUM:
         dsub[v] = rng.random(n)
+    # tono_dominante: -1 (acromática) o sector 0..11, como produce features.py
+    dsub["tono_dominante"] = rng.integers(-1, 12, size=n)
 
     # --- construir_arbol ---
     arbol = construir_arbol(Z, dsub[["img_id", "clase"] + VARS_NUM].to_dict("records"))
@@ -317,6 +331,22 @@ def _pruebas() -> None:
                     "misma) para esta imagen"
                 )
                 assert "x_px" in h["sprite"] and "y_px" in h["sprite"]
+
+            # tono_dominante debe viajar en cada hoja y estar en el dominio válido
+            for h in todas_hojas:
+                assert "tono_dominante" in h, (
+                    "REGRESIÓN: una hoja del árbol no tiene 'tono_dominante' — "
+                    "el panel categórico no tendría datos para esa imagen"
+                )
+                assert -1 <= h["tono_dominante"] <= 11, (
+                    f"tono_dominante fuera de dominio: {h['tono_dominante']} "
+                    "(esperado -1 o 0..11)"
+                )
+            with open(Path(tmp) / "metadatos.json") as f:
+                meta_exportada = json.load(f)
+            assert all("tono_dominante" in r for r in meta_exportada["registros"]), (
+                "REGRESIÓN: metadatos.json sin tono_dominante en algún registro"
+            )
 
             # las posiciones de sprite entre las hojas deben ser casi todas
             # distintas (no todas 0,0 — que sería exactamente el bug original)

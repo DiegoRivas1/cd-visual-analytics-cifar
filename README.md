@@ -16,7 +16,7 @@ bordes, tono dominante, uniformidad de fondo, energía central) a la estructura
 de clustering jerárquico, y lo complementa con un cruce externo (CIFAR-10H)
 para estudiar la ambigüedad humana. El resultado alimenta una aplicación web
 (`web/`) que reproduce el treemap zoomable de DendroMap y le agrega un panel
-de características — el aporte diferencial del proyecto.
+de características  el aporte diferencial del proyecto.
 
 ## Estructura
 
