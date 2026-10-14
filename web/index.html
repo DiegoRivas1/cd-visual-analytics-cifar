@@ -2,52 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Visual Analytics — CIFAR-10</title>
+  <title>Exploración visual de CIFAR-10</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/estilos.css" />
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>Exploración Visual de CIFAR-10</h1>
-      <p class="subtitulo">
-        Clustering jerárquico + características visuales cuantificables
-        complemento de <a href="https://div-lab.github.io/dendromap/" target="_blank" rel="noopener">DendroMap</a>
-      </p>
+    <header class="cabecera">
+      <div>
+        <h1>Exploración visual de CIFAR-10</h1>
+        <p class="subtitulo">
+          Clustering jerárquico y características visuales interpretables ·
+          complemento de <a href="https://div-lab.github.io/dendromap/" target="_blank" rel="noopener">DendroMap</a>
+        </p>
+      </div>
+      <p class="cabecera-dato">Submuestra de <strong id="total-imagenes">—</strong> imágenes</p>
     </header>
 
     <div id="cuerpo">
       <aside id="barra-lateral">
         <section id="controles">
-          <h2>Controles</h2>
-          <label for="slider-k">Nivel de abstracción (k clusters)</label>
-          <input id="slider-k" type="range" min="2" max="40" value="8" />
-          <span id="valor-k">8</span>
+          <h2>Vista</h2>
 
-          <label for="slider-lado">Tamaño de miniatura (px)</label>
-          <input id="slider-lado" type="range" min="16" max="48" value="32" />
+          <div class="control">
+            <div class="control-cab">
+              <label for="slider-k">Nivel de abstracción</label>
+              <output id="valor-k" for="slider-k">8</output>
+            </div>
+            <input id="slider-k" type="range" min="2" max="40" value="8" />
+            <p class="ayuda">Cantidad de clusters (k). Más clusters, grupos más finos.</p>
+          </div>
 
-          <button id="boton-volver">Volver a la vista completa</button>
+          <div class="control">
+            <div class="control-cab">
+              <label for="slider-lado">Tamaño de miniatura</label>
+              <output id="valor-lado" for="slider-lado">32 px</output>
+            </div>
+            <input id="slider-lado" type="range" min="16" max="48" value="32" />
+          </div>
 
-          <p class="dato-total">Total de imágenes: <strong id="total-imagenes">—</strong></p>
+          <button id="boton-volver" type="button">Volver a la vista completa</button>
         </section>
 
         <section id="panel-filtros">
           <h2>Filtros por característica</h2>
+          <p class="ayuda">Las miniaturas fuera del rango se atenúan en el treemap.</p>
         </section>
       </aside>
 
-      <main id="treemap" aria-label="Treemap jerárquico de clusters"></main>
+      <main id="zona-central">
+        <div id="treemap" aria-label="Treemap jerárquico de clusters"></div>
+        <p class="barra-ayuda">
+          Clic en un cluster para acercarte · rectángulos proporcionales al número de imágenes ·
+          <span class="tag-mixto">mixto</span> = ninguna clase supera el 60 %
+        </p>
+      </main>
 
       <aside id="panel-caracteristicas" aria-label="Perfil de características del cluster seleccionado"></aside>
     </div>
   </div>
 
+  <dialog id="dialogo-detalle" aria-labelledby="dlg-titulo"></dialog>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
   <script src="js/enlace.js"></script>
   <script src="js/layout.js"></script>
-  <script src="js/treemap.js"></script>
+  <script src="js/estadisticas.js"></script>
   <script src="js/categorias.js"></script>
+  <script src="js/glosario.js"></script>
+  <script src="js/treemap.js"></script>
   <script src="js/panel_caracteristicas.js"></script>
   <script src="js/filtros.js"></script>
   <script src="js/main.js"></script>

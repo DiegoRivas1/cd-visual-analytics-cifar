@@ -1,5 +1,5 @@
 /**
- * treemap.js  vista principal: treemap jerárquico zoomable, adaptado de
+ * treemap.js — vista principal: treemap jerárquico zoomable, adaptado de
  * DendroMap (Bertucci et al., 2023). Usa layout.js (ya probado en
  * aislamiento) para la geometría; este módulo solo se ocupa de dibujar con
  * D3 y de manejar las interacciones (zoom, slider de k, hover).
@@ -17,13 +17,6 @@
     function dimensiones() {
       const el = contenedor.node();
       return { w: el.clientWidth, h: el.clientHeight };
-    }
-
-    function colorPorClaseDominante(nodo) {
-      // color estable por hash simple del id — evita depender de una paleta
-      // externa mientras no haya una clase dominante calculada.
-      const paleta = d3.schemeTableau10;
-      return paleta[nodo.id % paleta.length];
     }
 
     function hojasDe(nodo) {
@@ -57,17 +50,9 @@
       todos.select("rect.fondo-cluster")
         .transition().duration(400)
         .attr("width", (d) => Math.max(0, d.rect.w))
-        .attr("height", (d) => Math.max(0, d.rect.h))
-        .attr("fill", (d) => colorPorClaseDominante(d.nodo))
-        .attr("fill-opacity", 0.15)
-        .attr("stroke", (d) => colorPorClaseDominante(d.nodo))
-        .attr("stroke-width", 1.5);
+        .attr("height", (d) => Math.max(0, d.rect.h));
 
-      todos.select("text.etiqueta-cluster")
-        .attr("x", 4).attr("y", 14)
-        .attr("font-size", 11)
-        .attr("fill", "#333")
-        .text((d) => `${d.nodo.n} imágenes`);
+      todos.select("text.etiqueta-cluster").attr("x", 6).attr("y", 14);
 
       // miniaturas: sampleadas con el mismo criterio probado en layout.test.js.
       // Se recorta el sprite con un <div> dentro de <foreignObject>, usando
@@ -80,6 +65,28 @@
         const muestra = Layout.muestrearImagenes(idsOrdenados, d.rect, lado);
         const mapaPorId = new Map(hojasVisibles.map((h) => [h.img_id, h]));
         const cols = Math.max(1, Math.floor(d.rect.w / lado));
+
+        // etiqueta: tamaño, clase dominante y su pureza; "mixto" si es baja
+        // (mismo umbral 0.6 que se usó para definir clusters mixtos en el EDA)
+        const dom = hojasVisibles.length > 1
+          ? Estadisticas.dominante(hojasVisibles.map((h) => h.clase)) : null;
+        const grupo = d3.select(this);
+        const etiqueta = grupo.select("text.etiqueta-cluster");
+        etiqueta.text(null);
+        etiqueta.append("tspan").text(d.nodo.n === 1 ? "1 imagen" : `${d.nodo.n} imágenes`);
+        let resumen = d.nodo.n === 1 ? "Imagen individual." : `Cluster de ${d.nodo.n} imágenes.`;
+        if (dom) {
+          etiqueta.append("tspan").attr("class", "dominante")
+            .text(` · ${dom.valor} ${Math.round(dom.p * 100)} %`);
+          resumen += ` Clase dominante: ${dom.valor} (${Math.round(dom.p * 100)} %).`;
+          if (dom.p < 0.6) {
+            etiqueta.append("tspan").attr("class", "tag-mixto-svg").attr("dx", 7).text("MIXTO");
+            resumen += " Cluster mixto (menos del 60 % de una sola clase).";
+          }
+        }
+        if (!d.nodo.hoja) resumen += " Clic para acercarte.";
+        const titulo = grupo.selectAll("title").data([resumen]);
+        titulo.enter().insert("title", ":first-child").merge(titulo).text((t) => t);
 
         const sel = grupoMin.selectAll("foreignObject").data(muestra, (id) => id);
         sel.exit().remove();

@@ -74,8 +74,11 @@
   });
 
   const sliderLado = document.getElementById("slider-lado");
+  const valorLado = document.getElementById("valor-lado");
   sliderLado.addEventListener("input", () => {
-    estado.actualizar({ ladoMiniatura: parseInt(sliderLado.value, 10) });
+    const lado = parseInt(sliderLado.value, 10);
+    if (valorLado) valorLado.textContent = lado + " px";
+    estado.actualizar({ ladoMiniatura: lado });
   });
 
   document.getElementById("boton-volver").addEventListener("click", () => {
