@@ -1,5 +1,5 @@
 /**
- * layout.js  algoritmo de treemap jerárquico adaptado de DendroMap
+ * layout.js — algoritmo de treemap jerárquico adaptado de DendroMap
  * (Bertucci et al., 2023, Sección 4.2 "DendroMap Visualization").
  *
  * Sin dependencias de D3 ni del DOM: toma un nodo de árbol binario
@@ -130,7 +130,60 @@
     return muestra;
   }
 
-  const Layout = { particionar, conPadding, nodosVisiblesParaK, calcularLayout, muestrearImagenes, PADDING };
+  /**
+   * Rejilla de miniaturas dentro de un área útil {w, h} (ya sin márgenes ni
+   * cabecera). Garantiza por construcción que ninguna miniatura se sale del
+   * área: si el área es más angosta o baja que `lado`, la miniatura se achica
+   * al espacio disponible; si ni así llega a `ladoMinimo`, devuelve una
+   * rejilla vacía (el cluster se muestra solo con su marco y su etiqueta).
+   *
+   * Devuelve { cols, filas, max, lado, paso }: `lado` es el tamaño efectivo y
+   * `paso` la distancia entre inicios de celdas contiguas (lado + separación).
+   */
+  function rejilla(area, lado, separacion, ladoMinimo) {
+    const gap = separacion == null ? 0 : separacion;
+    const minimo = ladoMinimo == null ? 10 : ladoMinimo;
+    const vacia = { cols: 0, filas: 0, max: 0, lado: 0, paso: 0 };
+    if (!(area.w > 0) || !(area.h > 0)) return vacia;
+    const ladoEf = Math.floor(Math.min(lado, area.w, area.h));
+    if (ladoEf < minimo) return vacia;
+    const paso = ladoEf + gap;
+    const cols = Math.floor((area.w + gap) / paso);
+    const filas = Math.floor((area.h + gap) / paso);
+    if (cols < 1 || filas < 1) return vacia;
+    return { cols, filas, max: cols * filas, lado: ladoEf, paso };
+  }
+
+  /**
+   * Toma como máximo `max` ids con período fijo, para que la muestra cubra
+   * todo el cluster y no solo su comienzo (misma idea que muestrearImagenes,
+   * pero con el cupo ya calculado por `rejilla`).
+   */
+  function muestrearHasta(ids, max) {
+    if (max <= 0) return [];
+    if (ids.length <= max) return ids.slice();
+    const periodo = Math.max(1, Math.floor(ids.length / max));
+    const muestra = [];
+    for (let i = 0; i < ids.length && muestra.length < max; i += periodo) muestra.push(ids[i]);
+    return muestra;
+  }
+
+  /**
+   * Elige la variante de etiqueta más completa que cabe en `anchoPx`.
+   * `variantes` va de la más completa a la más corta; cada una es una lista de
+   * segmentos { t: texto, c: clase CSS|null }. Si ninguna cabe devuelve [] (sin
+   * etiqueta) en vez de dejar que el texto invada la tarjeta vecina.
+   */
+  function elegirEtiqueta(variantes, anchoPx, pxPorCaracter) {
+    for (const v of variantes) {
+      // un segmento con separación `dx` (px) ocupa además esa separación
+      const largo = v.reduce((s, seg) => s + seg.t.length + (seg.dx ? Math.ceil(seg.dx / pxPorCaracter) : 0), 0);
+      if (largo * pxPorCaracter <= anchoPx) return v;
+    }
+    return [];
+  }
+
+  const Layout = { particionar, conPadding, nodosVisiblesParaK, calcularLayout, muestrearImagenes, rejilla, muestrearHasta, elegirEtiqueta, PADDING };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = Layout;

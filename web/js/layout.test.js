@@ -1,5 +1,5 @@
 /**
- * Pruebas en aislamiento de layout.js  sin D3, sin DOM, sin navegador.
+ * Pruebas en aislamiento de layout.js — sin D3, sin DOM, sin navegador.
  * Ejecutar con: node web/js/layout.test.js
  */
 const Layout = require("./layout.js");
@@ -127,8 +127,75 @@ function cerca(a, b, eps = 1e-6) {
   assert(m2[0] === 0 && m2[1] === 30, "debe samplear con el período calculado (150/5=30)");
 }
 
+
+// --- rejilla: casos concretos ---
+{
+  const r = Layout.rejilla({ w: 100, h: 100 }, 32, 2, 10);
+  assert(r.lado === 32 && r.paso === 34, "caso normal: lado 32, paso 34");
+  assert(r.cols === 3 && r.filas === 3, "caben 3x3 (3*32+2*2=100 <= 100)");
+  assert(r.max === 9, "max = cols * filas");
+}
+{
+  const r = Layout.rejilla({ w: 20, h: 100 }, 32, 2, 10);
+  assert(r.lado === 20 && r.cols === 1, "área más angosta que la miniatura: se achica a 20 y cabe 1 columna");
+}
+{
+  assert(Layout.rejilla({ w: 8, h: 100 }, 32, 2, 10).max === 0, "si ni achicada llega al mínimo -> rejilla vacía");
+  assert(Layout.rejilla({ w: 0, h: 50 }, 32, 2, 10).max === 0, "ancho 0 -> vacía");
+  assert(Layout.rejilla({ w: -5, h: 50 }, 32, 2, 10).max === 0, "ancho negativo -> vacía, sin NaN");
+}
+
+// --- rejilla: PROPIEDAD — ninguna miniatura puede salirse del área, para cualquier tamaño ---
+{
+  let semilla = 12345;
+  const azar = () => { semilla = (semilla * 1664525 + 1013904223) % 4294967296; return semilla / 4294967296; };
+  let casos = 0;
+  for (let t = 0; t < 600; t++) {
+    const area = { w: azar() * 400 - 20, h: azar() * 400 - 20 };
+    const lado = 16 + Math.floor(azar() * 40);
+    const gap = Math.floor(azar() * 5);
+    const r = Layout.rejilla(area, lado, gap, 10);
+    for (let i = 0; i < r.max; i++) {
+      const x = (i % r.cols) * r.paso;
+      const y = Math.floor(i / r.cols) * r.paso;
+      casos++;
+      assert(x + r.lado <= area.w + 1e-9, `miniatura ${i} se sale por la derecha (area ${area.w.toFixed(1)}x${area.h.toFixed(1)}, lado ${lado}, gap ${gap})`);
+      assert(y + r.lado <= area.h + 1e-9, `miniatura ${i} se sale por abajo (area ${area.w.toFixed(1)}x${area.h.toFixed(1)}, lado ${lado}, gap ${gap})`);
+    }
+  }
+  assert(casos > 1000, "la prueba de propiedad debe haber evaluado muchas miniaturas, evaluó " + casos);
+}
+
+// --- muestrearHasta ---
+{
+  assert(Layout.muestrearHasta([1, 2, 3], 5).length === 3, "si caben todas, no recorta");
+  assert(Layout.muestrearHasta([1, 2, 3], 0).length === 0, "cupo 0 -> vacío");
+  const ids = Array.from({ length: 100 }, (_, i) => i);
+  const m = Layout.muestrearHasta(ids, 10);
+  assert(m.length === 10 && m[0] === 0 && m[1] === 10, "período 100/10 = 10, empezando en 0");
+  assert(m[m.length - 1] >= 80, "la muestra cubre todo el cluster, no solo el comienzo");
+}
+
+// --- elegirEtiqueta ---
+{
+  const comp = [{ t: "68 imágenes", c: null }, { t: " · bird 79 %", c: "dominante" }, { t: " MIXTO", c: "tag" }];
+  const med = [{ t: "68", c: null }, { t: " · bird 79%", c: "dominante" }];
+  const corta = [{ t: "68", c: null }];
+  const V = [comp, med, corta];
+  const px = 7; // comp = 30 car, med = 13, corta = 2
+  assert(Layout.elegirEtiqueta(V, 300, px) === comp, "ancho de sobra -> la completa");
+  assert(Layout.elegirEtiqueta(V, 100, px) === med, "ancho medio -> la intermedia");
+  assert(Layout.elegirEtiqueta(V, 20, px) === corta, "ancho justo -> la corta");
+  assert(Layout.elegirEtiqueta(V, 10, px).length === 0, "no cabe ni la corta -> sin etiqueta, nunca desborda");
+  assert(Layout.elegirEtiqueta(V, 14, px) === corta, "límite: 2 car * 7 = 14 cabe exacto");
+  // la separación dx de un segmento también cuenta: 2 car + 14px/7 = 4 car = 28px
+  const conDx = [[{ t: "ab", c: null }, { t: "cd", c: "x", dx: 14 }]];
+  assert(Layout.elegirEtiqueta(conDx, 40, px).length === 0, "con dx: 6 car * 7 = 42 px no caben en 40");
+  assert(Layout.elegirEtiqueta(conDx, 42, px) === conDx[0], "con dx: 42 px caben exacto en 42");
+}
+
 if (fallos === 0) {
-  console.log("OK: todas las pruebas de layout.js pasaron (" + "11 grupos" + ")");
+  console.log("OK: todas las pruebas de layout.js pasaron");
   process.exit(0);
 } else {
   console.error(`${fallos} prueba(s) fallaron`);

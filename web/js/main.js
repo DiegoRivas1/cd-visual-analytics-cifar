@@ -61,6 +61,7 @@
     arbol,
     atlasSrc: "data/sprites/atlas.png",
     ladoAtlas,
+    ladoNativo: ladoMiniatura,
     estado,
   });
 

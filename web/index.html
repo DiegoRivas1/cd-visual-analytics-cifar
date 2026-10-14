@@ -10,9 +10,23 @@
   <link rel="stylesheet" href="css/estilos.css" />
 </head>
 <body>
+  <svg class="defs-globales" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="grad-cluster" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffb36b" />
+        <stop offset="1" stop-color="#ff6f91" />
+      </linearGradient>
+    </defs>
+  </svg>
+
   <div id="app">
     <header class="cabecera">
-      <div>
+      <svg class="marca" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 3 33 10.5 20 18 7 10.5Z" fill="#2ee6d3" />
+        <path d="M7 14 20 21.5V36L7 28.5Z" fill="#ff5fd2" />
+        <path d="M33 14V28.5L20 36V21.5Z" fill="#ffa05a" />
+      </svg>
+      <div class="cabecera-texto">
         <h1>Exploración visual de CIFAR-10</h1>
         <p class="subtitulo">
           Clustering jerárquico y características visuales interpretables ·
