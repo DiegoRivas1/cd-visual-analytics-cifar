@@ -261,7 +261,7 @@
       const dom = Estadisticas.dominante(hojas.map((h) => h.clase));
 
       const cab = contenedor.append("div").attr("class", "panel-cab");
-      cab.append("h3").text(`Cluster seleccionado — ${ids.size} imágenes`);
+      cab.append("h3").text(`Cluster seleccionado : ${ids.size} imágenes`);
       const meta = cab.append("p").attr("class", "meta");
       meta.append("span").text(`${((100 * ids.size) / total).toFixed(1)} % de la submuestra`);
       if (dom && ids.size > 1) {
