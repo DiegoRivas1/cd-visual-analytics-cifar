@@ -324,7 +324,9 @@
     // ------------------------------------------------------------------
 
     function seccion(sel, titulo, texto) {
-      const s = sel.append("section");
+      const slug = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const s = sel.append("section").attr("class", "sec-" + slug)
+        .style("--i", sel.selectAll("section").size());
       s.append("h3").text(titulo);
       if (texto) s.append("p").text(texto);
       return s;
@@ -338,6 +340,18 @@
       }
       return `Este cluster tiende a tener ${a.d > 0 ? g.alto : g.bajo} que el resto del dataset ` +
         `(d = ${Estadisticas.fmtSigno(a.d)}, ${Estadisticas.etiquetaEfecto(a.d)}).`;
+    }
+
+    function kpisCont(sel, a) {
+      const k = sel.append("div").attr("class", "kpis");
+      const ficha = (clase, valor, rotulo) => {
+        const f = k.append("div").attr("class", "kpi " + clase);
+        f.append("b").text(valor);
+        f.append("span").text(rotulo);
+      };
+      ficha("cl", Estadisticas.fmt(a.mediaC, 2), "media del cluster");
+      ficha("gl", Estadisticas.fmt(a.mediaG, 2), "media del dataset");
+      ficha("ef", a.d == null ? "—" : Estadisticas.fmtSigno(a.d), a.d == null ? "d de Cohen" : "d · " + Estadisticas.etiquetaEfecto(a.d));
     }
 
     function tablaCont(sel, a) {
@@ -406,6 +420,7 @@
           `si están más a la izquierda, ${g.bajo}. Las líneas punteadas marcan las medias. ` +
           "Ambas series están en porcentaje, así que las alturas son comparables.");
         const s = seccion(der, "En este cluster", fraseCont(a, g));
+        kpisCont(s, a);
         tablaCont(s, a);
         s.append("p").attr("class", "dato")
           .text("La d de Cohen compara el cluster con el resto del dataset (sin incluir al cluster). " +

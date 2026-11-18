@@ -59,7 +59,69 @@
       ];
     }
 
+    // ---- vista previa al pasar el mouse: composición por clase + más imágenes del cluster ----
+    const VP_LADO = 24, VP_COLS = 10, VP_MAX = 120, VP_CLASES = 6;
+    const vista = d3.select("body").append("div").attr("class", "vista-previa").attr("aria-hidden", "true");
+    let temporizador = null, ultimoEv = null;
+
+    function ocultarVista() {
+      clearTimeout(temporizador);
+      vista.classed("visible", false);
+    }
+
+    function colocarVista(ev) {
+      const r = vista.node().getBoundingClientRect();
+      let x = ev.clientX + 18, y = ev.clientY + 18;
+      if (x + r.width > window.innerWidth - 8) x = ev.clientX - r.width - 18;
+      if (y + r.height > window.innerHeight - 8) y = window.innerHeight - r.height - 8;
+      vista.style("left", Math.max(8, x) + "px").style("top", Math.max(8, y) + "px");
+    }
+
+    function mostrarVista(d) {
+      const hojas = hojasDe(d.nodo);
+      if (hojas.length < 2) return;
+      const n = hojas.length;
+      const dom = Estadisticas.dominante(hojas.map((x) => x.clase));
+      const conteo = d3.rollups(hojas, (v) => v.length, (x) => x.clase).sort((p, q) => q[1] - p[1]);
+      vista.selectAll("*").remove();
+
+      const cab = vista.append("div").attr("class", "vp-cab");
+      cab.append("strong").text(`${n} imágenes`);
+      if (dom && dom.p < UMBRAL_MIXTO) cab.append("span").attr("class", "tag-mixto").text("mixto");
+
+      const clases = vista.append("div").attr("class", "vp-clases");
+      for (const [clase, c] of conteo.slice(0, VP_CLASES)) {
+        const f = clases.append("div").attr("class", "vp-fila");
+        f.append("span").text(clase);
+        f.append("span").attr("class", "vp-barra").append("i").style("width", `${(100 * c) / n}%`);
+        f.append("span").attr("class", "vp-pct").text(`${Math.round((100 * c) / n)} %`);
+      }
+      if (conteo.length > VP_CLASES) {
+        clases.append("div").attr("class", "vp-mas").text(`+ ${conteo.length - VP_CLASES} clases más`);
+      }
+
+      const porId = new Map(hojas.map((x) => [x.img_id, x]));
+      const muestra = Layout.muestrearHasta(hojas.map((x) => x.img_id), VP_MAX);
+      const factor = VP_LADO / ladoNativo;
+      vista.append("div").attr("class", "vp-grid")
+        .style("grid-template-columns", `repeat(${VP_COLS}, ${VP_LADO}px)`)
+        .selectAll("div").data(muestra).join("div").attr("class", "vp-img")
+        .style("background-image", `url(${atlasSrc})`)
+        .style("background-size", `${ladoAtlas * factor}px ${ladoAtlas * factor}px`)
+        .style("background-position", (id) => {
+          const hoja = porId.get(id);
+          return hoja && hoja.sprite ? `${-hoja.sprite.x_px * factor}px ${-hoja.sprite.y_px * factor}px` : "0 0";
+        });
+
+      vista.append("div").attr("class", "vp-pie").text(
+        (n > muestra.length ? `Muestra de ${muestra.length} de ${n} imágenes` : `Las ${n} imágenes`) +
+        (d.nodo.hoja ? "" : " · clic para acercarte"));
+      colocarVista(ultimoEv);
+      vista.classed("visible", true);
+    }
+
     function dibujar() {
+      ocultarVista();
       const { w, h } = dimensiones();
       svg.attr("viewBox", `0 0 ${w} ${h}`);
       const k = estado.obtener().k;
@@ -111,16 +173,6 @@
           etiqueta.append("tspan").attr("class", seg.c).attr("dx", seg.dx || null).text(seg.t);
         }
 
-        // --- tooltip del cluster (completo, aunque la etiqueta se haya acortado) ---
-        let resumen = d.nodo.n === 1 ? "Imagen individual." : `Cluster de ${d.nodo.n} imágenes.`;
-        if (dom) {
-          resumen += ` Clase dominante: ${dom.valor} (${Math.round(dom.p * 100)} %).`;
-          if (mixto) resumen += " Cluster mixto (ninguna clase supera el 60 %).";
-        }
-        if (!d.nodo.hoja) resumen += " Clic para acercarte.";
-        const titulo = grupo.selectAll("title").data([resumen]);
-        titulo.enter().insert("title", ":first-child").merge(titulo).text((t) => t);
-
         // --- miniaturas: rejilla dentro del área útil, escaladas desde el atlas ---
         const util = { w: d.rect.w - 2 * MARGEN, h: d.rect.h - CABECERA - MARGEN };
         const rej = Layout.rejilla(util, lado, SEPARACION, LADO_MINIMO);
@@ -166,9 +218,17 @@
           nodoRaizVista = d.nodo;
           estado.actualizar({ clusterSeleccionado: d.nodo });
         })
-        .on("mouseenter", function () {
+        .on("mouseenter", function (ev, d) {
           d3.select(this).raise();
-        });
+          ultimoEv = ev;
+          clearTimeout(temporizador);
+          temporizador = setTimeout(() => mostrarVista(d), 260);
+        })
+        .on("mousemove", (ev) => {
+          ultimoEv = ev;
+          if (vista.classed("visible")) colocarVista(ev);
+        })
+        .on("mouseleave", ocultarVista);
     }
 
     function volverArriba() {
