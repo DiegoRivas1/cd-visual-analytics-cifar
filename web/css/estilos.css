@@ -244,6 +244,15 @@ foreignObject { overflow: visible; }
 .efecto-3 { background: linear-gradient(135deg, var(--cluster), var(--cluster-2)); color: #2b0f00; font-weight: 600; box-shadow: 0 0 12px rgba(255, 130, 110, 0.5); }
 
 /* --- gráficos (tarjeta y ventana) ------------------------------------------- */
+/* las barras crecen desde la base, escalonadas */
+.barra-global, .barra-cluster, .barra-global-cat, .barra-cluster-cat {
+  transform-box: fill-box; transform-origin: 50% 100%;
+  animation: crecer 0.75s cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 22ms);
+  transition: filter 0.2s;
+}
+.barra-cluster:hover, .barra-cluster-cat:hover { filter: brightness(1.2) drop-shadow(0 0 6px rgba(255, 130, 110, 0.7)); }
+@keyframes crecer { from { transform: scaleY(0); opacity: 0; } 60% { opacity: 1; } to { transform: scaleY(1); } }
 .barra-global { fill: rgba(169, 180, 255, 0.42); }
 .barra-cluster { fill: url(#grad-cluster); opacity: 0.92; }
 .media { stroke-width: 1.3; stroke-dasharray: 3 3; }
@@ -257,7 +266,7 @@ foreignObject { overflow: visible; }
 .eje path, .eje line { stroke: rgba(255, 255, 255, 0.28); }
 .rejilla line { stroke: rgba(255, 255, 255, 0.09); }
 .titulo-eje { font: 400 12px var(--f-texto); fill: var(--texto-suave); }
-.zona-hover { fill: transparent; }
+.zona-hover { fill: transparent; transition: fill 0.15s; }
 .zona-hover:hover { fill: rgba(255, 255, 255, 0.08); }
 .barra-global-cat { fill: rgba(169, 180, 255, 0.18); stroke: rgba(169, 180, 255, 0.6); stroke-width: 0.7; }
 .barra-cluster-cat { stroke: rgba(255, 255, 255, 0.85); stroke-width: 0.6; }
@@ -327,3 +336,14 @@ foreignObject { overflow: visible; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+/* --- movimiento de texto y paneles ------------------------------------------ */
+.cabecera h1 { background-size: 220% 100%; animation: brillo-titulo 9s ease-in-out infinite alternate; }
+@keyframes brillo-titulo { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.tarjeta { animation: subir 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.panel-cab { animation: subir 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.num-anim { font-variant-numeric: tabular-nums; color: var(--cluster); }
+.panel-vacio { animation: subir 0.5s ease backwards; }
+.guia li { animation: subir 0.5s ease backwards; }
+.guia li:nth-child(2) { animation-delay: 0.12s; }
+.guia li:nth-child(3) { animation-delay: 0.24s; }

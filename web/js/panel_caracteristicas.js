@@ -113,10 +113,10 @@
       }
 
       const ancho = (b) => Math.max(0, x(b.x1) - x(b.x0) - 1);
-      svg.append("g").selectAll("rect").data(hg).join("rect").attr("class", "barra-global")
+      svg.append("g").selectAll("rect").data(hg).join("rect").attr("class", "barra-global").style("--i", (_, i) => i)
         .attr("x", (b) => x(b.x0) + 0.5).attr("y", (b) => y(b.p))
         .attr("width", ancho).attr("height", (b) => y(0) - y(b.p));
-      svg.append("g").selectAll("rect").data(hc).join("rect").attr("class", "barra-cluster")
+      svg.append("g").selectAll("rect").data(hc).join("rect").attr("class", "barra-cluster").style("--i", (_, i) => i)
         .attr("x", (b) => x(b.x0) + 0.5).attr("y", (b) => y(b.p))
         .attr("width", ancho).attr("height", (b) => y(0) - y(b.p));
 
@@ -177,11 +177,11 @@
         svg.append("g").attr("class", "rejilla").selectAll("line").data(y.ticks(5)).join("line")
           .attr("x1", m.l).attr("x2", w - m.r).attr("y1", (t) => y(t)).attr("y2", (t) => y(t));
       }
-      svg.append("g").selectAll("rect").data(a.pg).join("rect").attr("class", "barra-global-cat")
+      svg.append("g").selectAll("rect").data(a.pg).join("rect").attr("class", "barra-global-cat").style("--i", (_, i) => i)
         .attr("x", (d) => x(d.categoria)).attr("y", (d) => y(d.p))
         .attr("width", x.bandwidth()).attr("height", (d) => y(0) - y(d.p));
       const ancho = x.bandwidth() * 0.62;
-      svg.append("g").selectAll("rect").data(a.pc).join("rect").attr("class", "barra-cluster-cat")
+      svg.append("g").selectAll("rect").data(a.pc).join("rect").attr("class", "barra-cluster-cat").style("--i", (_, i) => i)
         .attr("x", (d) => x(d.categoria) + (x.bandwidth() - ancho) / 2).attr("y", (d) => y(d.p))
         .attr("width", ancho).attr("height", (d) => y(0) - y(d.p))
         .style("fill", (d) => Categorias.colorTono(d.categoria));
@@ -240,6 +240,19 @@
       l.append("span").text("Dataset completo");
     }
 
+    // Cuenta animada hacia el valor final (sin animación si el usuario pidió menos movimiento).
+    function contar(sel, valor, decimales, sufijo = "") {
+      const fmt = (v) => v.toFixed(decimales) + sufijo;
+      if (global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        sel.text(fmt(valor)); return;
+      }
+      sel.text(fmt(0)).transition().duration(700).ease(d3.easeCubicOut)
+        .tween("texto", function () {
+          const i = d3.interpolateNumber(0, valor);
+          return (t) => { this.textContent = fmt(i(t)); };
+        });
+    }
+
     function dibujar(conservarScroll) {
       const alto = conservarScroll ? contenedor.node().scrollTop : 0;
       const sel = estado.obtener().clusterSeleccionado;
@@ -261,9 +274,13 @@
       const dom = Estadisticas.dominante(hojas.map((h) => h.clase));
 
       const cab = contenedor.append("div").attr("class", "panel-cab");
-      cab.append("h3").text(`Cluster seleccionado : ${ids.size} imágenes`);
+      const h3 = cab.append("h3");
+      h3.append("span").text("Cluster seleccionado : ");
+      contar(h3.append("span").attr("class", "num-anim"), ids.size, 0);
+      h3.append("span").text(" imágenes");
       const meta = cab.append("p").attr("class", "meta");
-      meta.append("span").text(`${((100 * ids.size) / total).toFixed(1)} % de la submuestra`);
+      const pct = meta.append("span");
+      contar(pct, (100 * ids.size) / total, 1, " % de la submuestra");
       if (dom && ids.size > 1) {
         meta.append("span").text(` · clase dominante: ${dom.valor} (${Math.round(dom.p * 100)} %)`);
         if (dom.p < UMBRAL_MIXTO) meta.append("span").attr("class", "tag-mixto").text("mixto");
@@ -282,6 +299,7 @@
       const tarjetas = contenedor.append("div").attr("class", "tarjetas")
         .selectAll("button").data(lista, (a) => a.v).join("button")
         .attr("type", "button").attr("class", "tarjeta")
+        .style("--i", (_, i) => i)
         .attr("aria-label", (a) => `Ampliar: ${Glosario.GLOSARIO[a.v].nombre}`)
         .on("click", (_ev, a) => abrirDetalle(a));
 
