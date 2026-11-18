@@ -48,6 +48,7 @@
     contenedorSel: "#panel-caracteristicas",
     registros,
     estado,
+    atlas: { src: "data/sprites/atlas.png", ladoAtlas, ladoNativo: ladoMiniatura },
   });
 
   const filtros = crearFiltros({

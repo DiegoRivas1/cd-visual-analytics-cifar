@@ -22,12 +22,13 @@
   const N_BINS = 16;
   const UMBRAL_MIXTO = 0.6; // pureza por debajo de la cual el cluster se marca "mixto" (igual que en el EDA)
 
-  function crearPanelCaracteristicas({ contenedorSel, registros, estado, dialogoSel = "#dialogo-detalle" }) {
+  function crearPanelCaracteristicas({ contenedorSel, registros, estado, atlas = null, dialogoSel = "#dialogo-detalle" }) {
     const contenedor = d3.select(contenedorSel);
     const dialogo = d3.select(dialogoSel);
     const total = registros.length;
     let ordenarPorRelevancia = true;
     let nodoDibujado = undefined;
+    let alPasarSobre = null; // la ventana de detalle lo define para mostrar las imágenes de la barra bajo el mouse
 
     const variablesContinuas = VARS_CONT.filter((v) => registros.some((r) => r[v] != null));
     const dominios = {};
@@ -56,7 +57,7 @@
           (ids.has(reg.img_id) ? c : r).push(x);
         }
         res.push({
-          v, tipo: "cont", g, c, r, dominio: dominios[v],
+          v, tipo: "cont", g, c, r, ids, dominio: dominios[v],
           mediaC: Estadisticas.media(c), mediaG: Estadisticas.media(g),
           medianaC: Estadisticas.mediana(c), medianaG: Estadisticas.mediana(g),
           sdC: Estadisticas.desviacion(c), sdG: Estadisticas.desviacion(g),
@@ -75,7 +76,7 @@
         const pg = Categorias.proporcionesPorCategoria(tg, cats);
         const pc = Categorias.proporcionesPorCategoria(tc, cats);
         res.push({
-          v: VAR_CAT, tipo: "cat", g: tg, c: tc, pg, pc,
+          v: VAR_CAT, tipo: "cat", g: tg, c: tc, pg, pc, ids,
           tv: Estadisticas.distanciaTV(pg.map((x) => x.p), pc.map((x) => x.p)),
         });
       }
@@ -150,6 +151,12 @@
           .on("click", (_ev, b) => resaltar({
             variable: a.v, nombre: `${g.nombre} ${Estadisticas.fmt(b.x0, 2)}–${Estadisticas.fmt(b.x1, 2)}`,
             lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1] }))
+          .on("mouseenter", (_ev, b) => {
+            marcarBarra(svg, (d) => d.x0 === b.x0);
+            if (alPasarSobre) alPasarSobre({ variable: a.v, lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1],
+              etiqueta: `${g.nombre} entre ${Estadisticas.fmt(b.x0, 2)} y ${Estadisticas.fmt(b.x1, 2)}` });
+          })
+          .on("mouseleave", () => { marcarBarra(svg, null); if (alPasarSobre) alPasarSobre(null); })
           .attr("x", (b) => x(b.x0)).attr("y", m.t).attr("width", (b) => Math.max(0, x(b.x1) - x(b.x0)))
           .attr("height", h - m.b - m.t)
           .append("title").text((b, i) =>
@@ -206,12 +213,24 @@
           .on("click", (_ev, d) => resaltar({
             variable: "tono_dominante", categoria: d.categoria,
             nombre: `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}` }))
+          .on("mouseenter", (_ev, d) => {
+            marcarBarra(svg, (x) => x.categoria === d.categoria);
+            if (alPasarSobre) alPasarSobre({ variable: "tono_dominante", categoria: d.categoria,
+              etiqueta: `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}` });
+          })
+          .on("mouseleave", () => { marcarBarra(svg, null); if (alPasarSobre) alPasarSobre(null); })
           .attr("x", (d) => x(d.categoria)).attr("y", m.t).attr("width", x.bandwidth())
           .attr("height", h - m.b - m.t)
           .append("title").text((d, i) =>
             `${Glosario.NOMBRES_SECTOR[d.categoria]}\n` +
             `Cluster: ${(a.pc[i].p * 100).toFixed(1)} %\nDataset: ${(d.p * 100).toFixed(1)} %`);
       }
+    }
+
+    // la barra bajo el mouse queda destacada y las demás se atenúan
+    function marcarBarra(svg, esActiva) {
+      svg.classed("hay-activa", !!esActiva);
+      svg.selectAll('rect[class*="barra-"]').classed("activa", (d) => (esActiva ? esActiva(d) : false));
     }
 
     // clic en una barra: resalta esas imágenes en el treemap y cierra la ventana
@@ -263,6 +282,16 @@
         .tween("texto", function () {
           const i = d3.interpolateNumber(0, valor);
           return (t) => { this.textContent = fmt(i(t)); };
+        });
+    }
+
+    function animarNumero(sel, valor, formato, ms = 900) {
+      if (valor == null) return;
+      if (global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches) { sel.text(formato(valor)); return; }
+      sel.text(formato(0)).transition().delay(180).duration(ms).ease(d3.easeCubicOut)
+        .tween("texto", function () {
+          const i = d3.interpolateNumber(0, valor);
+          return (t) => { this.textContent = formato(i(t)); };
         });
     }
 
@@ -357,14 +386,26 @@
 
     function kpisCont(sel, a) {
       const k = sel.append("div").attr("class", "kpis");
-      const ficha = (clase, valor, rotulo) => {
+      const ficha = (clase, valor, formato, rotulo) => {
         const f = k.append("div").attr("class", "kpi " + clase);
-        f.append("b").text(valor);
+        const b = f.append("b").text(valor == null ? "—" : formato(valor));
+        animarNumero(b, valor, formato);
         f.append("span").text(rotulo);
       };
-      ficha("cl", Estadisticas.fmt(a.mediaC, 2), "media del cluster");
-      ficha("gl", Estadisticas.fmt(a.mediaG, 2), "media del dataset");
-      ficha("ef", a.d == null ? "—" : Estadisticas.fmtSigno(a.d), a.d == null ? "d de Cohen" : "d · " + Estadisticas.etiquetaEfecto(a.d));
+      ficha("cl", a.mediaC, (v) => Estadisticas.fmt(v, 2), "media del cluster");
+      ficha("gl", a.mediaG, (v) => Estadisticas.fmt(v, 2), "media del dataset");
+      ficha("ef", a.d, (v) => Estadisticas.fmtSigno(v), a.d == null ? "d de Cohen" : "d · " + Estadisticas.etiquetaEfecto(a.d));
+      if (a.d == null) return;
+      // medidor del tamaño del efecto: la marca viaja desde el centro hasta su posición
+      const m = sel.append("div").attr("class", "medidor").attr("aria-hidden", "true");
+      const pista = m.append("div").attr("class", "medidor-pista");
+      for (const z of ["grande", "medio", "pequeño", "nulo", "pequeño", "medio", "grande"]) pista.append("i").attr("class", "z-" + z.replace("ñ", "n"));
+      const pos = 50 + 50 * Math.max(-1, Math.min(1, a.d / 1.2));
+      pista.append("b").attr("class", "medidor-marca").attr("data-pos", pos).style("left", "50%");
+      const ejes = m.append("div").attr("class", "medidor-ejes");
+      ejes.append("span").text("menos");
+      ejes.append("span").text("sin diferencia");
+      ejes.append("span").text("más");
     }
 
     function tablaCont(sel, a) {
@@ -422,6 +463,35 @@
       leyenda(izq, a.tipo === "cat");
       const svg = izq.append("svg").attr("class", "grafico-grande");
       dibujarGrafico(svg, a, { ancho: 640, alto: a.tipo === "cat" ? 360 : 340, detallado: true });
+      const galeria = izq.append("div").attr("class", "galeria");
+      const galHead = galeria.append("div").attr("class", "gal-cab");
+      const galGrid = galeria.append("div").attr("class", "gal-grid");
+      const textoInicial = "Pasá el mouse sobre una barra para ver qué imágenes del cluster caen ahí.";
+      galHead.text(textoInicial);
+      alPasarSobre = (r) => {
+        galGrid.selectAll("*").remove();
+        galeria.classed("activa", !!r);
+        if (!r) { galHead.text(textoInicial); return; }
+        const cumple = (reg) => {
+          const x = reg[r.variable];
+          if (x == null) return false;
+          if (r.categoria != null) return x === r.categoria;
+          return x >= r.lo && (x < r.hi || (r.ultimo && x <= r.hi));
+        };
+        const delCluster = registros.filter((reg) => a.ids.has(reg.img_id) && cumple(reg));
+        const nDataset = registros.filter(cumple).length;
+        galHead.text(`${r.etiqueta}: ${delCluster.length} del cluster · ${nDataset} del dataset`);
+        if (!atlas) return;
+        const lado = 34, f = lado / atlas.ladoNativo;
+        const muestra = Layout.muestrearHasta(delCluster.map((x) => x.img_id), 40);
+        const porId = new Map(delCluster.map((x) => [x.img_id, x]));
+        galGrid.selectAll("div").data(muestra).join("div").attr("class", "gal-img")
+          .style("--i", (_, i) => i)
+          .style("background-image", `url(${atlas.src})`)
+          .style("background-size", `${atlas.ladoAtlas * f}px ${atlas.ladoAtlas * f}px`)
+          .style("background-position", (id) => { const h = porId.get(id); return h && h.sprite ? `${-h.sprite.x_px * f}px ${-h.sprite.y_px * f}px` : "0 0"; });
+        if (!muestra.length) galGrid.append("span").attr("class", "gal-vacio").text("Ninguna imagen del cluster cae en este rango.");
+      };
       izq.append("p").attr("class", "ayuda-hover").text("Pasá el mouse sobre una barra para ver los valores exactos. Hacé clic en una barra para resaltar esas imágenes en el treemap.");
 
       const der = cuerpo.append("div").attr("class", "dlg-texto");
@@ -448,6 +518,8 @@
       if (g.nota) seccion(der, "Para tener en cuenta", g.nota);
 
       nodo.showModal();
+      // la marca del medidor viaja a su posición una vez abierta la ventana
+      setTimeout(() => dialogo.selectAll(".medidor-marca").style("left", function () { return this.dataset.pos + "%"; }), 260);
     }
 
     if (dialogo.node()) {
