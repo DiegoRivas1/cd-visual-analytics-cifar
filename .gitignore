@@ -11,3 +11,7 @@ report/*.out
 report/*.toc
 report/*.pdf
 .venv/
+# Cloudflare
+.env
+.dev.vars
+.wrangler/
