@@ -534,3 +534,20 @@ rect.fijada.sel-4 { stroke: var(--sel-4); filter: drop-shadow(0 0 6px var(--sel-
 .chip-fija button { background: rgba(255, 255, 255, 0.14); color: var(--texto); }
 .chip-fija button:hover { background: var(--c); color: var(--sobre-acento); }
 .chip-punto { flex: none; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+
+/* --- vista previa (mouse) vs selección fija (clic): efectos distintos que se suman ---------------- */
+.miniatura { transition: opacity 0.25s, filter 0.2s, outline-color 0.2s, transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2), box-shadow 0.2s; }
+.miniatura.previa-resto:not(.fuera-de-filtro) { opacity: 0.55; filter: saturate(0.7); }
+.miniatura.previa-img {
+  transform: scale(1.22); border-radius: var(--r0);
+  box-shadow: 0 0 0 2px rgba(var(--cluster-rgb), 0.95), 0 8px 18px rgba(0, 0, 0, 0.55);
+}
+/* una imagen fijada que además cae en la vista previa conserva sus anillos de color y suma la elevación */
+.miniatura.previa-img.fijada-img {
+  box-shadow: 0 0 0 2px var(--c2, transparent), 0 0 0 4px rgba(var(--cluster-rgb), 0.95), 0 8px 18px rgba(0, 0, 0, 0.55);
+}
+rect.sel-1 { --cs: var(--sel-1); } rect.sel-2 { --cs: var(--sel-2); } rect.sel-3 { --cs: var(--sel-3); } rect.sel-4 { --cs: var(--sel-4); }
+svg.hay-activa rect[class*="barra-"].activa { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(1.04); }
+svg.hay-activa rect[class*="barra-"].fijada.activa {
+  filter: brightness(1.2) drop-shadow(0 0 8px var(--cs, var(--sel-1))) drop-shadow(0 0 5px rgba(var(--cluster-rgb), 0.9));
+}

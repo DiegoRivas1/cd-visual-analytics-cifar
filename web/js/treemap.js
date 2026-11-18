@@ -188,11 +188,8 @@
     }
     const slotsDe = (hoja, sels) => sels.filter((q) => pasaResaltado(hoja, q)).map((q) => q.slot);
     const pasaSelecciones = (hoja, sels) => !sels.length || sels.some((q) => pasaResaltado(hoja, q));
-    // ¿la imagen queda "encendida"? (la vista previa manda sobre las selecciones fijas)
-    function encendida(hoja, e) {
-      if (e.previa) return pasaResaltado(hoja, e.previa);
-      return pasaSelecciones(hoja, e.selecciones);
-    }
+    // se apaga (gris) lo que no cumple las selecciones fijas ni los filtros; la vista previa NO apaga nada
+    const apagada = (hoja, e) => !pasaSelecciones(hoja, e.selecciones) || !cumpleFiltros(hoja, e);
     function cumpleFiltros(hoja, e) {
       return !(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(hoja, e.filtros));
     }
@@ -201,6 +198,14 @@
       sel.classed("fijada-img", (id) => { const h = hojaDe(id); return !!h && slotsDe(h, e.selecciones).length > 0; })
         .style("--c1", (id) => { const h = hojaDe(id); const s0 = h ? slotsDe(h, e.selecciones) : []; return s0[0] ? `var(--sel-${s0[0]})` : null; })
         .style("--c2", (id) => { const h = hojaDe(id); const s0 = h ? slotsDe(h, e.selecciones) : []; return s0[1] ? `var(--sel-${s0[1]})` : null; });
+    }
+
+    // vista previa (mouse sobre una barra): las imágenes que caen en ese rango se elevan y agrandan; el resto solo se atenúa un poco
+    function estiloPrevia(sel, hojaDe, e) {
+      const dentro = (id) => { const h = hojaDe(id); return !!(e.previa && h && pasaResaltado(h, e.previa)); };
+      sel.classed("previa-img", dentro)
+        .classed("previa-resto", (id) => !!e.previa && !dentro(id) && !!hojaDe(id));
+      if (e.previa) sel.filter(".previa-img").each(function () { d3.select(this.parentNode).raise(); }); // por encima de sus vecinas
     }
 
     function dibujarChip() {
@@ -228,8 +233,9 @@
       estiloMarca(sel, (id) => hojaPorId.get(id), e);
       sel.classed("fuera-de-filtro", (id) => {
         const hoja = hojaPorId.get(id);
-        return !!hoja && (!encendida(hoja, e) || !cumpleFiltros(hoja, e));
+        return !!hoja && apagada(hoja, e);
       });
+      estiloPrevia(sel, (id) => hojaPorId.get(id), e);
       dibujarChip();
     }
 
@@ -321,9 +327,10 @@
           })
           .classed("fuera-de-filtro", (id) => {
             const hoja = porId.get(id);
-            return !!hoja && (!encendida(hoja, e) || !cumpleFiltros(hoja, e));
+            return !!hoja && apagada(hoja, e);
           })
           .call((m) => estiloMarca(m, (id) => porId.get(id), e))
+          .call((m) => estiloPrevia(m, (id) => porId.get(id), e))
           .on("mouseenter", (_ev, id) => mostrarImagen(porId.get(id)))
           .on("mouseleave", () => { clearTimeout(temporizador); temporizador = setTimeout(() => mostrarCluster(d), 60); });
       });
