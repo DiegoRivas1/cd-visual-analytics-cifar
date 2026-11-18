@@ -28,7 +28,7 @@
     const total = registros.length;
     let ordenarPorRelevancia = true;
     let nodoDibujado = undefined;
-    let resaltadoPintado = null;
+    let seleccionesPintadas = [];
     let alPasarSobre = null; // la ventana de detalle lo define para mostrar las imágenes de la barra bajo el mouse
 
     const variablesContinuas = VARS_CONT.filter((v) => registros.some((r) => r[v] != null));
@@ -258,19 +258,27 @@
       return p.categoria != null ? p.categoria === q.categoria : p.lo === q.lo && p.hi === q.hi;
     }
 
-    // clic en una barra: la fija (y la marca en todas las gráficas y en el treemap);
-    // otro clic en la misma la quita; un clic en otra barra cambia la selección
+    // clic en una barra: la fija con un color propio (hasta 4 a la vez); otro clic en la misma la quita
     function resaltar(r) {
-      estado.actualizar({ resaltado: mismoRango(estado.obtener().resaltado, r) ? null : r });
+      const act = estado.obtener().selecciones;
+      const ya = act.find((q) => mismoRango(q, r));
+      if (ya) { estado.actualizar({ selecciones: act.filter((q) => q !== ya) }); return; }
+      const usados = new Set(act.map((q) => q.slot));
+      let slot = [1, 2, 3, 4].find((n) => !usados.has(n));
+      let base = act;
+      if (!slot) { slot = act[0].slot; base = act.slice(1); } // con 4 ocupadas, reemplaza la más antigua
+      estado.actualizar({ selecciones: base.concat([Object.assign({}, r, { slot })]) });
     }
 
-    // marca en cada gráfica la barra que coincide con la selección fija
+    // marca en cada gráfica las barras que coinciden con alguna selección fija (cada una con su color)
     function marcarFijada(svg) {
-      const r = estado.obtener().resaltado;
-      const mia = !!r && svg.attr("data-var") === r.variable;
-      svg.classed("tiene-fijada", mia);
-      svg.selectAll('rect[class*="barra-"]').classed("fijada", (d) =>
-        mia && (r.categoria != null ? d.categoria === r.categoria : d.x0 === r.lo && d.x1 === r.hi));
+      const mias = estado.obtener().selecciones.filter((q) => q.variable === svg.attr("data-var"));
+      svg.classed("tiene-fijada", mias.length > 0);
+      svg.selectAll('rect[class*="barra-"]').each(function (d) {
+        const q = mias.find((m) => (m.categoria != null ? d.categoria === m.categoria : d.x0 === m.lo && d.x1 === m.hi));
+        const el = d3.select(this).classed("fijada", !!q);
+        for (let n = 1; n <= 4; n++) el.classed("sel-" + n, !!q && q.slot === n);
+      });
     }
 
     function sincronizarFijada() {
@@ -339,6 +347,7 @@
       const alto = conservarScroll ? contenedor.node().scrollTop : 0;
       const sel = estado.obtener().clusterSeleccionado;
       nodoDibujado = sel;
+      if (estado.obtener().previa) estado.actualizar({ previa: null }); // la gráfica bajo el mouse se redibuja: no dejar una vista previa huérfana
       contenedor.selectAll("*").remove();
 
       if (!sel) {
@@ -368,7 +377,7 @@
         if (dom.p < UMBRAL_MIXTO) meta.append("span").attr("class", "tag-mixto").text("mixto");
       }
       leyenda(cab, false);
-      cab.append("p").attr("class", "ayuda-barras").text("Mouse sobre una barra: vista previa en el treemap. Clic en una barra: la fija. Clic en el resto de la tarjeta: ampliar.");
+      cab.append("p").attr("class", "ayuda-barras").text("Mouse sobre una barra: vista previa en el treemap. Clic en una barra: la fija con un color (hasta 4). Clic en el resto de la tarjeta: ampliar.");
       const lab = cab.append("label").attr("class", "interruptor");
       lab.append("input").attr("type", "checkbox").attr("id", "orden-relevancia")
         .property("checked", ordenarPorRelevancia)
@@ -533,7 +542,7 @@
           .style("background-position", (id) => { const h = porId.get(id); return h && h.sprite ? `${-h.sprite.x_px * f}px ${-h.sprite.y_px * f}px` : "0 0"; });
         if (!muestra.length) galGrid.append("span").attr("class", "gal-vacio").text("Ninguna imagen del cluster cae en este rango.");
       };
-      izq.append("p").attr("class", "ayuda-hover").text("Mouse sobre una barra: vista previa en el treemap. Clic: la fija (turquesa). Otro clic en la misma, o en otra barra, la quita o la cambia.");
+      izq.append("p").attr("class", "ayuda-hover").text("Mouse sobre una barra: vista previa en el treemap. Clic: la fija con un color (hasta 4 a la vez). Otro clic en la misma la quita.");
 
       const der = cuerpo.append("div").attr("class", "dlg-texto");
       seccion(der, "Qué mide", g.queMide);
@@ -591,8 +600,10 @@
     // filtros o sliders (así tampoco se pierde la posición del scroll)
     estado.suscribir((e) => {
       if (e.clusterSeleccionado !== nodoDibujado) dibujar();
-      else if (e.resaltado !== resaltadoPintado) sincronizarFijada();
-      resaltadoPintado = e.resaltado;
+      if (e.selecciones !== seleccionesPintadas) sincronizarFijada(); // también las gráficas del panel de detalle, aunque esté cerrado
+      seleccionesPintadas = e.selecciones;
+      // sin cluster seleccionado el panel de detalle ya no tiene de qué hablar
+      if (!e.clusterSeleccionado) { const n = dialogo.node(); if (n && n.open) n.close(); }
     });
     dibujar();
     return { dibujar };

@@ -518,6 +518,19 @@ svg.hay-activa rect[class*="barra-"].activa { opacity: 1; filter: brightness(1.1
 
 /* selección fija (clic) frente a vista previa (mouse): la fija es turquesa con borde, la previa solo atenúa */
 svg.tiene-fijada:not(.hay-activa) rect[class*="barra-"]:not(.fijada) { opacity: 0.5; }
-rect[class*="barra-"].fijada { opacity: 1; stroke: var(--teal); stroke-width: 2px; filter: drop-shadow(0 0 6px rgba(var(--acento-rgb), 0.85)); }
-.miniatura.fijada-img { outline: 2px solid var(--teal); outline-offset: -1px; box-shadow: 0 0 9px rgba(var(--acento-rgb), 0.75); }
+rect[class*="barra-"].fijada { opacity: 1; stroke: var(--sel-1); stroke-width: 2px; filter: drop-shadow(0 0 6px var(--sel-1)); }
+rect.fijada.sel-2 { stroke: var(--sel-2); filter: drop-shadow(0 0 6px var(--sel-2)); }
+rect.fijada.sel-3 { stroke: var(--sel-3); filter: drop-shadow(0 0 6px var(--sel-3)); }
+rect.fijada.sel-4 { stroke: var(--sel-4); filter: drop-shadow(0 0 6px var(--sel-4)); }
+.miniatura.fijada-img, .vp-img.fijada-img { outline: 2px solid var(--c1, var(--sel-1)); outline-offset: -1px; box-shadow: 0 0 0 2px var(--c2, transparent), 0 0 9px var(--c1, var(--sel-1)); }
+.vp-img.fuera-de-filtro { opacity: 0.2; filter: grayscale(1); }
 .ayuda-barras { margin: 0 0 0.55rem; font-size: 0.72rem; line-height: 1.4; color: var(--texto-tenue); }
+
+/* colores de las selecciones fijas (hasta 4) y sus avisos sobre el treemap */
+:root { --sel-1: #2ee6d3; --sel-2: #ffe14d; --sel-3: #86f26b; --sel-4: #ff8ad8; }
+.chips-resaltado { position: absolute; left: 10px; bottom: 10px; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.35rem; max-width: calc(100% - 20px); }
+.chips-resaltado .chip-resaltado { position: static; inset: auto; }
+.chip-fija { padding-left: 0.55rem; color: var(--texto); background: rgba(var(--hondo-rgb), 0.92); border: 2px solid var(--c); box-shadow: 0 4px 16px rgba(var(--sombra-rgb), 0.4); }
+.chip-fija button { background: rgba(255, 255, 255, 0.14); color: var(--texto); }
+.chip-fija button:hover { background: var(--c); color: var(--sobre-acento); }
+.chip-punto { flex: none; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }

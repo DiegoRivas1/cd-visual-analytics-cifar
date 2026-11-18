@@ -92,28 +92,23 @@
     }
 
     function mostrarCluster(d) {
-      const todas = hojasDe(d.nodo);
-      if (todas.length < 2) return;
-      // el dock respeta los filtros y la selección fija: solo muestra lo que cumple
+      const hojas = hojasDe(d.nodo);
+      if (hojas.length < 2) return;
       const e = estado.obtener();
-      const hojas = todas.filter((x) => pasaResaltado(x, e.resaltado) &&
-        !(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(x, e.filtros)));
-      const restringido = hojas.length !== todas.length;
       const n = hojas.length;
-      const dom = Estadisticas.dominante(todas.map((x) => x.clase));
+      const dom = Estadisticas.dominante(hojas.map((x) => x.clase));
+      // igual que en el treemap: las imágenes que cumplen filtros y selecciones salen marcadas; las demás, en gris
+      const cumple = (x) => pasaSelecciones(x, e.selecciones) && cumpleFiltros(x, e);
+      const marcadas = hojas.filter(cumple);
+      const restringido = marcadas.length !== n;
       const conteo = d3.rollups(hojas, (v) => v.length, (x) => x.clase).sort((p, q) => q[1] - p[1]);
       anclarDock();
       dock.selectAll("*").remove();
 
       const cab = dock.append("div").attr("class", "vp-cab");
-      cab.append("strong").text(restringido ? `${n} de ${todas.length} imágenes` : `${n} imágenes`);
+      cab.append("strong").text(restringido ? `${n} imágenes · ${marcadas.length} marcadas` : `${n} imágenes`);
       if (dom && dom.p < UMBRAL_MIXTO) cab.append("span").attr("class", "tag-mixto").text("mixto");
 
-      if (n === 0) {
-        dock.append("div").attr("class", "vp-pie").text("Ninguna imagen de este cluster cumple los filtros ni la selección actual.");
-        dock.classed("visible", true);
-        return;
-      }
       const clases = dock.append("div").attr("class", "vp-clases");
       for (const [clase, c] of conteo.slice(0, DK_CLASES)) {
         const f = clases.append("div").attr("class", "vp-fila");
@@ -123,23 +118,34 @@
       }
       if (conteo.length > DK_CLASES) clases.append("div").attr("class", "vp-mas").text(`+ ${conteo.length - DK_CLASES} clases más`);
 
-      // las imágenes se deslizan de izquierda a derecha: así se ven también las que no caben
+      // muestra: si hay marcadas, entran primero (hasta la mitad); se completa con el resto y se respeta el orden original
+      const orden = new Map(hojas.map((x, i) => [x.img_id, i]));
+      let ids;
+      if (!restringido) ids = Layout.muestrearHasta(hojas.map((x) => x.img_id), DK_MAX);
+      else {
+        const okIds = Layout.muestrearHasta(marcadas.map((x) => x.img_id), Math.floor(DK_MAX / 2));
+        const resto = hojas.filter((x) => !cumple(x)).map((x) => x.img_id);
+        ids = okIds.concat(Layout.muestrearHasta(resto, DK_MAX - okIds.length));
+        ids.sort((p, q) => orden.get(p) - orden.get(q));
+      }
       const porId = new Map(hojas.map((x) => [x.img_id, x]));
-      const muestra = Layout.muestrearHasta(hojas.map((x) => x.img_id), DK_MAX);
-      const porFila = Math.ceil(muestra.length / DK_FILAS);
+      const porFila = Math.ceil(ids.length / DK_FILAS);
       for (let f = 0; f < DK_FILAS; f++) {
-        const ids = muestra.slice(f * porFila, (f + 1) * porFila);
-        if (!ids.length) continue;
+        const fila = ids.slice(f * porFila, (f + 1) * porFila);
+        if (!fila.length) continue;
         const pista = dock.append("div").attr("class", "vp-carril").append("div").attr("class", "vp-pista")
-          .style("--dur", `${Math.max(8, ids.length * (0.55 + 0.12 * f))}s`);
-        for (const id of ids.concat(ids)) {
-          const el = pista.append("div").attr("class", "vp-img");
+          .style("--dur", `${Math.max(8, fila.length * (0.55 + 0.12 * f))}s`);
+        const celdas = pista.selectAll("div").data(fila.concat(fila)).join("div").attr("class", "vp-img");
+        celdas.each(function (id) {
+          const el = d3.select(this);
           for (const [k, v] of Object.entries(fondoAtlas(porId.get(id), DK_LADO))) el.style(k, v);
-        }
+        });
+        celdas.classed("fuera-de-filtro", (id) => !cumple(porId.get(id)));
+        estiloMarca(celdas, (id) => porId.get(id), e);
       }
       dock.append("div").attr("class", "vp-pie").text(
-        (restringido ? "Con los filtros y la selección actuales · " : "") +
-        (n > muestra.length ? `muestra de ${muestra.length} de ${n}` : `las ${n}`) +
+        (restringido ? "Marcadas según filtros y selecciones; en gris, las demás · " : "") +
+        (n > ids.length ? `muestra de ${ids.length} de ${n}` : `las ${n}`) +
         (d.nodo.hoja ? "" : " · clic para acercarte"));
       dock.classed("visible", true);
     }
@@ -172,7 +178,7 @@
       dock.classed("visible", true);
     }
 
-    // ---- resaltado desde un histograma ----
+    // ---- selecciones fijas (clic en barras) y vista previa (mouse) ----
     function pasaResaltado(hoja, r) {
       if (!r) return true;
       const x = hoja[r.variable];
@@ -180,18 +186,37 @@
       if (r.categoria != null) return x === r.categoria;
       return x >= r.lo && (x < r.hi || (r.ultimo && x <= r.hi));
     }
+    const slotsDe = (hoja, sels) => sels.filter((q) => pasaResaltado(hoja, q)).map((q) => q.slot);
+    const pasaSelecciones = (hoja, sels) => !sels.length || sels.some((q) => pasaResaltado(hoja, q));
+    // ¿la imagen queda "encendida"? (la vista previa manda sobre las selecciones fijas)
+    function encendida(hoja, e) {
+      if (e.previa) return pasaResaltado(hoja, e.previa);
+      return pasaSelecciones(hoja, e.selecciones);
+    }
+    function cumpleFiltros(hoja, e) {
+      return !(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(hoja, e.filtros));
+    }
+    // clases y colores de anillo: una o dos selecciones que contienen a la imagen
+    function estiloMarca(sel, hojaDe, e) {
+      sel.classed("fijada-img", (id) => { const h = hojaDe(id); return !!h && slotsDe(h, e.selecciones).length > 0; })
+        .style("--c1", (id) => { const h = hojaDe(id); const s0 = h ? slotsDe(h, e.selecciones) : []; return s0[0] ? `var(--sel-${s0[0]})` : null; })
+        .style("--c2", (id) => { const h = hojaDe(id); const s0 = h ? slotsDe(h, e.selecciones) : []; return s0[1] ? `var(--sel-${s0[1]})` : null; });
+    }
 
     function dibujarChip() {
-      contenedor.select(".chip-resaltado").remove();
+      contenedor.select(".chips-resaltado").remove();
       const e = estado.obtener();
-      const r = e.previa || e.resaltado;
-      if (!r) return;
-      const cuantas = todasHojas.filter((x) => pasaResaltado(x, r)).length;
-      const chip = contenedor.append("div").attr("class", "chip-resaltado" + (e.previa ? " chip-previa" : ""));
-      chip.append("span").text(`${e.previa ? "Vista previa" : "Resaltando"} · ${r.nombre} · ${cuantas} imágenes (${Math.round((100 * cuantas) / todasHojas.length)} %)`);
-      if (!e.previa) {
-        chip.append("button").attr("type", "button").attr("aria-label", "Quitar resaltado").text("×")
-          .on("click", () => estado.actualizar({ resaltado: null }));
+      if (!e.previa && !e.selecciones.length) return;
+      const caja = contenedor.append("div").attr("class", "chips-resaltado");
+      const cuantas = (r) => todasHojas.filter((x) => pasaResaltado(x, r)).length;
+      const texto = (r) => `${r.nombre} · ${cuantas(r)} imágenes (${Math.round((100 * cuantas(r)) / todasHojas.length)} %)`;
+      if (e.previa) caja.append("div").attr("class", "chip-resaltado chip-previa").append("span").text("Vista previa · " + texto(e.previa));
+      for (const q of e.selecciones) {
+        const chip = caja.append("div").attr("class", "chip-resaltado chip-fija").style("--c", `var(--sel-${q.slot})`);
+        chip.append("i").attr("class", "chip-punto");
+        chip.append("span").text(texto(q));
+        chip.append("button").attr("type", "button").attr("aria-label", "Quitar esta selección").text("×")
+          .on("click", () => estado.actualizar({ selecciones: estado.obtener().selecciones.filter((z) => z !== q) }));
       }
     }
 
@@ -199,15 +224,11 @@
     const hojaPorId = new Map(todasHojas.map((x) => [x.img_id, x]));
     function atenuar() {
       const e = estado.obtener();
-      const r = e.previa || e.resaltado;
-      contenedor.selectAll("div.miniatura").classed("fijada-img", (id) => {
+      const sel = contenedor.selectAll("div.miniatura");
+      estiloMarca(sel, (id) => hojaPorId.get(id), e);
+      sel.classed("fuera-de-filtro", (id) => {
         const hoja = hojaPorId.get(id);
-        return !!(hoja && e.resaltado && pasaResaltado(hoja, e.resaltado));
-      }).classed("fuera-de-filtro", (id) => {
-        const hoja = hojaPorId.get(id);
-        if (!hoja) return false;
-        if (!pasaResaltado(hoja, r)) return true;
-        return !!(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(hoja, e.filtros));
+        return !!hoja && (!encendida(hoja, e) || !cumpleFiltros(hoja, e));
       });
       dibujarChip();
     }
@@ -274,8 +295,7 @@
         const porId = new Map(hojasVisibles.map((x) => [x.img_id, x]));
         const factor = rej.lado / ladoNativo;
         const filtros = estado.obtener().filtros;
-        const fijado = estado.obtener().resaltado;
-        const resaltado = estado.obtener().previa || fijado;
+        const e = estado.obtener();
 
         const grupoMin = grupo.select("g.miniaturas");
         const sel = grupoMin.selectAll("foreignObject").data(muestra, (id) => id);
@@ -299,17 +319,11 @@
             if (!hoja || !hoja.sprite) return "0 0";
             return `${-hoja.sprite.x_px * factor}px ${-hoja.sprite.y_px * factor}px`;
           })
-          .classed("fijada-img", (id) => {
-            const hoja = porId.get(id);
-            return !!(hoja && fijado && pasaResaltado(hoja, fijado));
-          })
           .classed("fuera-de-filtro", (id) => {
             const hoja = porId.get(id);
-            if (!hoja) return false;
-            if (!pasaResaltado(hoja, resaltado)) return true;
-            if (!filtros || typeof pasaFiltros !== "function") return false;
-            return !pasaFiltros(hoja, filtros);
+            return !!hoja && (!encendida(hoja, e) || !cumpleFiltros(hoja, e));
           })
+          .call((m) => estiloMarca(m, (id) => porId.get(id), e))
           .on("mouseenter", (_ev, id) => mostrarImagen(porId.get(id)))
           .on("mouseleave", () => { clearTimeout(temporizador); temporizador = setTimeout(() => mostrarCluster(d), 60); });
       });
@@ -331,7 +345,7 @@
 
     function volverArriba() {
       nodoRaizVista = arbol;
-      estado.actualizar({ clusterSeleccionado: null, resaltado: null });
+      estado.actualizar({ clusterSeleccionado: null, selecciones: [], previa: null });
     }
 
     let previaAnterior = estado.obtener().previa;

@@ -8,6 +8,7 @@
 
 /* --- Herbario: lámina científica clara, papel gris verdoso y tinta ---------- */
 :root[data-tema="herbario"] {
+  --sel-1: #0b7a6e; --sel-2: #b07a00; --sel-3: #2f8f2f; --sel-4: #b5179e;
   --fondo-a: #e9efec; --fondo-b: #e1eae6; --fondo-c: #d9e5e3; --lienzo: #f6f9f7;
   --vidrio: rgba(255, 255, 255, 0.72); --vidrio-fuerte: rgba(255, 255, 255, 0.95);
   --borde: rgba(20, 48, 43, 0.22); --borde-suave: rgba(20, 48, 43, 0.12);
@@ -52,6 +53,7 @@
 
 /* --- Brasa: oscuro cálido, vino y ámbar ----------------------------------- */
 :root[data-tema="brasa"] {
+  --sel-1: #ffb627; --sel-2: #3ddbd9; --sel-3: #b5e853; --sel-4: #d9b3ff;
   --fondo-a: #1d0f20; --fondo-b: #34122a; --fondo-c: #4d1a2f; --lienzo: #160a19;
   --texto: #fff1e8; --texto-suave: rgba(255, 236, 224, 0.78); --texto-tenue: rgba(255, 236, 224, 0.56);
 
@@ -81,6 +83,7 @@
 
 /* --- Plano: cianotipo, líneas finas sobre azul de plano --------------------- */
 :root[data-tema="plano"] {
+  --sel-1: #7fd6ff; --sel-2: #ff6b9e; --sel-3: #9dff7a; --sel-4: #c9a7ff;
   --fondo-a: #0a2a5c; --fondo-b: #0c3272; --fondo-c: #0a2a5c; --lienzo: #092553;
   --vidrio: rgba(127, 214, 255, 0.05); --vidrio-fuerte: rgba(127, 214, 255, 0.13);
   --borde: rgba(127, 214, 255, 0.42); --borde-suave: rgba(127, 214, 255, 0.2);
