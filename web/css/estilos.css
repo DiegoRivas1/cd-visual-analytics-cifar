@@ -515,3 +515,9 @@ svg.hay-activa rect[class*="barra-"].activa { opacity: 1; filter: brightness(1.1
 .dlg-cuerpo { align-content: start; }
 .dlg-grafico, .dlg-texto section { flex: none; }
 .chip-resaltado { top: auto; right: auto; bottom: 10px; left: 10px; }
+
+/* selección fija (clic) frente a vista previa (mouse): la fija es turquesa con borde, la previa solo atenúa */
+svg.tiene-fijada:not(.hay-activa) rect[class*="barra-"]:not(.fijada) { opacity: 0.5; }
+rect[class*="barra-"].fijada { opacity: 1; stroke: var(--teal); stroke-width: 2px; filter: drop-shadow(0 0 6px rgba(var(--acento-rgb), 0.85)); }
+.miniatura.fijada-img { outline: 2px solid var(--teal); outline-offset: -1px; box-shadow: 0 0 9px rgba(var(--acento-rgb), 0.75); }
+.ayuda-barras { margin: 0 0 0.55rem; font-size: 0.72rem; line-height: 1.4; color: var(--texto-tenue); }

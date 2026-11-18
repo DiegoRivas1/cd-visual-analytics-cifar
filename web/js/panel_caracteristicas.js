@@ -28,6 +28,7 @@
     const total = registros.length;
     let ordenarPorRelevancia = true;
     let nodoDibujado = undefined;
+    let resaltadoPintado = null;
     let alPasarSobre = null; // la ventana de detalle lo define para mostrar las imágenes de la barra bajo el mouse
 
     const variablesContinuas = VARS_CONT.filter((v) => registros.some((r) => r[v] != null));
@@ -237,10 +238,11 @@
       if (detallado && alPasarSobre) alPasarSobre(r);
     }
 
-    // zonas sensibles de las gráficas pequeñas (sin tooltip ni clic: el clic abre la ventana)
+    // zonas sensibles de las gráficas pequeñas (clic = fijar la selección; clic en el resto de la tarjeta = ampliar)
     function zonasMini(svg, datos, geom, rangoDe, activaDe) {
       svg.append("g").selectAll("rect").data(datos).join("rect").attr("class", "zona-hover")
         .attr("x", geom.x).attr("y", geom.y).attr("width", geom.w).attr("height", geom.h)
+        .on("click", (ev, d) => { ev.stopPropagation(); resaltar(rangoDe(d)); })
         .on("mouseenter", (_ev, d) => sobreBarra(svg, activaDe(d), rangoDe(d), false))
         .on("mouseleave", () => sobreBarra(svg, null, null, false));
     }
@@ -251,14 +253,36 @@
       svg.selectAll('rect[class*="barra-"]').classed("activa", (d) => (esActiva ? esActiva(d) : false));
     }
 
-    // clic en una barra: deja fijas esas imágenes resaltadas en el treemap
+    function mismoRango(p, q) {
+      if (!p || !q || p.variable !== q.variable) return false;
+      return p.categoria != null ? p.categoria === q.categoria : p.lo === q.lo && p.hi === q.hi;
+    }
+
+    // clic en una barra: la fija (y la marca en todas las gráficas y en el treemap);
+    // otro clic en la misma la quita; un clic en otra barra cambia la selección
     function resaltar(r) {
-      estado.actualizar({ resaltado: r }); // el panel lateral sigue abierto: el treemap se ve completo
+      estado.actualizar({ resaltado: mismoRango(estado.obtener().resaltado, r) ? null : r });
+    }
+
+    // marca en cada gráfica la barra que coincide con la selección fija
+    function marcarFijada(svg) {
+      const r = estado.obtener().resaltado;
+      const mia = !!r && svg.attr("data-var") === r.variable;
+      svg.classed("tiene-fijada", mia);
+      svg.selectAll('rect[class*="barra-"]').classed("fijada", (d) =>
+        mia && (r.categoria != null ? d.categoria === r.categoria : d.x0 === r.lo && d.x1 === r.hi));
+    }
+
+    function sincronizarFijada() {
+      contenedor.selectAll("svg.grafico-mini").each(function () { marcarFijada(d3.select(this)); });
+      dialogo.selectAll("svg.grafico-grande").each(function () { marcarFijada(d3.select(this)); });
     }
 
     function dibujarGrafico(svg, a, o) {
       if (a.tipo === "cat") graficoTono(svg, a, o);
       else graficoContinuo(svg, a, o);
+      svg.attr("data-var", a.v);
+      marcarFijada(svg);
     }
 
     // ------------------------------------------------------------------
@@ -344,6 +368,7 @@
         if (dom.p < UMBRAL_MIXTO) meta.append("span").attr("class", "tag-mixto").text("mixto");
       }
       leyenda(cab, false);
+      cab.append("p").attr("class", "ayuda-barras").text("Mouse sobre una barra: vista previa en el treemap. Clic en una barra: la fija. Clic en el resto de la tarjeta: ampliar.");
       const lab = cab.append("label").attr("class", "interruptor");
       lab.append("input").attr("type", "checkbox").attr("id", "orden-relevancia")
         .property("checked", ordenarPorRelevancia)
@@ -508,7 +533,7 @@
           .style("background-position", (id) => { const h = porId.get(id); return h && h.sprite ? `${-h.sprite.x_px * f}px ${-h.sprite.y_px * f}px` : "0 0"; });
         if (!muestra.length) galGrid.append("span").attr("class", "gal-vacio").text("Ninguna imagen del cluster cae en este rango.");
       };
-      izq.append("p").attr("class", "ayuda-hover").text("Al pasar el mouse por una barra, esas imágenes se marcan en el treemap. Un clic las deja fijas.");
+      izq.append("p").attr("class", "ayuda-hover").text("Mouse sobre una barra: vista previa en el treemap. Clic: la fija (turquesa). Otro clic en la misma, o en otra barra, la quita o la cambia.");
 
       const der = cuerpo.append("div").attr("class", "dlg-texto");
       seccion(der, "Qué mide", g.queMide);
@@ -566,6 +591,8 @@
     // filtros o sliders (así tampoco se pierde la posición del scroll)
     estado.suscribir((e) => {
       if (e.clusterSeleccionado !== nodoDibujado) dibujar();
+      else if (e.resaltado !== resaltadoPintado) sincronizarFijada();
+      resaltadoPintado = e.resaltado;
     });
     dibujar();
     return { dibujar };

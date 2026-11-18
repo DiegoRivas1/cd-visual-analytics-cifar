@@ -92,18 +92,28 @@
     }
 
     function mostrarCluster(d) {
-      const hojas = hojasDe(d.nodo);
-      if (hojas.length < 2) return;
+      const todas = hojasDe(d.nodo);
+      if (todas.length < 2) return;
+      // el dock respeta los filtros y la selección fija: solo muestra lo que cumple
+      const e = estado.obtener();
+      const hojas = todas.filter((x) => pasaResaltado(x, e.resaltado) &&
+        !(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(x, e.filtros)));
+      const restringido = hojas.length !== todas.length;
       const n = hojas.length;
-      const dom = Estadisticas.dominante(hojas.map((x) => x.clase));
+      const dom = Estadisticas.dominante(todas.map((x) => x.clase));
       const conteo = d3.rollups(hojas, (v) => v.length, (x) => x.clase).sort((p, q) => q[1] - p[1]);
       anclarDock();
       dock.selectAll("*").remove();
 
       const cab = dock.append("div").attr("class", "vp-cab");
-      cab.append("strong").text(`${n} imágenes`);
+      cab.append("strong").text(restringido ? `${n} de ${todas.length} imágenes` : `${n} imágenes`);
       if (dom && dom.p < UMBRAL_MIXTO) cab.append("span").attr("class", "tag-mixto").text("mixto");
 
+      if (n === 0) {
+        dock.append("div").attr("class", "vp-pie").text("Ninguna imagen de este cluster cumple los filtros ni la selección actual.");
+        dock.classed("visible", true);
+        return;
+      }
       const clases = dock.append("div").attr("class", "vp-clases");
       for (const [clase, c] of conteo.slice(0, DK_CLASES)) {
         const f = clases.append("div").attr("class", "vp-fila");
@@ -128,7 +138,8 @@
         }
       }
       dock.append("div").attr("class", "vp-pie").text(
-        (n > muestra.length ? `Muestra de ${muestra.length} de ${n} imágenes` : `Las ${n} imágenes`) +
+        (restringido ? "Con los filtros y la selección actuales · " : "") +
+        (n > muestra.length ? `muestra de ${muestra.length} de ${n}` : `las ${n}`) +
         (d.nodo.hoja ? "" : " · clic para acercarte"));
       dock.classed("visible", true);
     }
@@ -189,7 +200,10 @@
     function atenuar() {
       const e = estado.obtener();
       const r = e.previa || e.resaltado;
-      contenedor.selectAll("div.miniatura").classed("fuera-de-filtro", (id) => {
+      contenedor.selectAll("div.miniatura").classed("fijada-img", (id) => {
+        const hoja = hojaPorId.get(id);
+        return !!(hoja && e.resaltado && pasaResaltado(hoja, e.resaltado));
+      }).classed("fuera-de-filtro", (id) => {
         const hoja = hojaPorId.get(id);
         if (!hoja) return false;
         if (!pasaResaltado(hoja, r)) return true;
@@ -260,7 +274,8 @@
         const porId = new Map(hojasVisibles.map((x) => [x.img_id, x]));
         const factor = rej.lado / ladoNativo;
         const filtros = estado.obtener().filtros;
-        const resaltado = estado.obtener().previa || estado.obtener().resaltado;
+        const fijado = estado.obtener().resaltado;
+        const resaltado = estado.obtener().previa || fijado;
 
         const grupoMin = grupo.select("g.miniaturas");
         const sel = grupoMin.selectAll("foreignObject").data(muestra, (id) => id);
@@ -283,6 +298,10 @@
             const hoja = porId.get(id);
             if (!hoja || !hoja.sprite) return "0 0";
             return `${-hoja.sprite.x_px * factor}px ${-hoja.sprite.y_px * factor}px`;
+          })
+          .classed("fijada-img", (id) => {
+            const hoja = porId.get(id);
+            return !!(hoja && fijado && pasaResaltado(hoja, fijado));
           })
           .classed("fuera-de-filtro", (id) => {
             const hoja = porId.get(id);
