@@ -74,6 +74,7 @@
           sliders[v].max.property("value", max);
           sliders[v].min.dispatch("input");
         }
+        estado.actualizar({ resaltado: null }); // también quita el resaltado por barra de histograma
       });
 
     return { rangosGlobales };

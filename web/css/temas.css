@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Temas visuales. Aurora es el tema base (definido en :root de estilos.css).
+   Cada tema solo redefine tokens; los componentes no cambian.
+   Se elige con el selector de la cabecera y se recuerda en el navegador.
+   ========================================================================== */
+
+#app::before, #app::after { opacity: var(--brillos); }
+
+/* --- Herbario: lámina científica clara, papel gris verdoso y tinta ---------- */
+:root[data-tema="herbario"] {
+  --fondo-a: #e9efec; --fondo-b: #e1eae6; --fondo-c: #d9e5e3; --lienzo: #f6f9f7;
+  --vidrio: rgba(255, 255, 255, 0.72); --vidrio-fuerte: rgba(255, 255, 255, 0.95);
+  --borde: rgba(20, 48, 43, 0.22); --borde-suave: rgba(20, 48, 43, 0.12);
+  --trazo: rgba(20, 48, 43, 0.3); --trazo-fuerte: rgba(20, 48, 43, 0.7);
+  --texto: #14302b; --texto-suave: rgba(20, 48, 43, 0.82); --texto-tenue: rgba(20, 48, 43, 0.62);
+
+  --teal: #0b7a6e; --teal-2: #1d5fa8;
+  --cluster: #f0561d; --cluster-a: #f47a3c; --cluster-2: #e3345f; --mixto: #b5179e; --global: #6f83ad;
+  --acento-rgb: 11, 122, 110; --acento2-rgb: 29, 95, 168; --mixto-rgb: 181, 23, 158;
+  --cluster-rgb: 240, 86, 29; --cluster2-rgb: 227, 52, 95; --global-rgb: 111, 131, 173;
+  --panel-rgb: 255, 255, 255; --hondo-rgb: 255, 255, 255; --sombra-rgb: 20, 48, 43; --sobre-rgb: 255, 255, 255;
+  --sobre-acento: #ffffff; --global-claro: #44577d; --cluster-claro: #8a2b0a;
+  --grad-titulo: linear-gradient(90deg, #14302b, #14302b);
+  --dialogo-bg: #f4f8f6;
+
+  --f-texto: "Public Sans", "Segoe UI", sans-serif;
+  --f-titulo: "Newsreader", Georgia, serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --r0: 2px; --r1: 3px; --r2: 4px; --r3: 5px; --r4: 6px; --r-pill: 4px;
+  --blur: none; --brillos: 0; --hex: none;
+}
+:root[data-tema="herbario"] body { background: linear-gradient(180deg, var(--fondo-a), var(--fondo-c)) fixed; }
+:root[data-tema="herbario"] .cabecera { background: #f6f9f7; border-bottom: 2px solid var(--texto); }
+:root[data-tema="herbario"] .cabecera h1 { font-weight: 500; font-size: 1.55rem; letter-spacing: 0; animation: none; }
+:root[data-tema="herbario"] #treemap { box-shadow: none; background: var(--lienzo); border: 1px solid var(--trazo); }
+:root[data-tema="herbario"] #barra-lateral, :root[data-tema="herbario"] #panel-caracteristicas { background: rgba(255, 255, 255, 0.5); }
+:root[data-tema="herbario"] .cluster .fondo-cluster { fill: #ffffff; stroke: var(--trazo); }
+:root[data-tema="herbario"] .miniatura { box-shadow: none; }
+:root[data-tema="herbario"] .barra-global { fill: rgba(var(--global-rgb), 0.5); }
+:root[data-tema="herbario"] .barra-global-cat { fill: rgba(var(--global-rgb), 0.16); stroke: rgba(var(--global-rgb), 0.9); }
+:root[data-tema="herbario"] .barra-cluster-cat { stroke: var(--texto); stroke-width: 0.5; }
+:root[data-tema="herbario"] .tarjeta { box-shadow: 0 1px 0 var(--borde-suave); }
+:root[data-tema="herbario"] .tarjeta:hover { background: #fff; border-color: var(--teal); }
+:root[data-tema="herbario"] .dock-vista { background: #ffffff; box-shadow: 4px 4px 0 rgba(20, 48, 43, 0.15); border: 1px solid var(--texto); }
+:root[data-tema="herbario"] #dialogo-detalle { box-shadow: 6px 6px 0 rgba(20, 48, 43, 0.2); border: 1px solid var(--texto); }
+:root[data-tema="herbario"] .grafico-grande { background: #fff; }
+:root[data-tema="herbario"] .eje text, :root[data-tema="herbario"] .etq-eje, :root[data-tema="herbario"] .titulo-eje { fill: var(--texto-suave); }
+:root[data-tema="herbario"] input[type="range"]::-webkit-slider-thumb { background: #fff; box-shadow: 0 0 0 2px rgba(var(--acento-rgb), 0.25); }
+:root[data-tema="herbario"] .miniatura:hover { box-shadow: none; }
+:root[data-tema="herbario"] .cluster:hover .fondo-cluster, :root[data-tema="herbario"] .cluster.mixto .fondo-cluster, :root[data-tema="herbario"] .cluster.mixto:hover .fondo-cluster { filter: none; }
+:root[data-tema="herbario"] .cluster.mixto .fondo-cluster { fill: rgba(var(--mixto-rgb), 0.05); }
+
+/* --- Brasa: oscuro cálido, vino y ámbar ----------------------------------- */
+:root[data-tema="brasa"] {
+  --fondo-a: #1d0f20; --fondo-b: #34122a; --fondo-c: #4d1a2f; --lienzo: #160a19;
+  --texto: #fff1e8; --texto-suave: rgba(255, 236, 224, 0.78); --texto-tenue: rgba(255, 236, 224, 0.56);
+
+  --teal: #ffb627; --teal-2: #ff8a3d;
+  --cluster: #ff4d6d; --cluster-a: #ff7a8e; --cluster-2: #c9184a; --mixto: #3ddbd9; --global: #b8a4e3;
+  --acento-rgb: 255, 182, 39; --acento2-rgb: 255, 138, 61; --mixto-rgb: 61, 219, 217;
+  --cluster-rgb: 255, 77, 109; --cluster2-rgb: 201, 24, 74; --global-rgb: 184, 164, 227;
+  --panel-rgb: 28, 10, 30; --hondo-rgb: 20, 7, 24; --sombra-rgb: 10, 2, 12; --sobre-rgb: 42, 16, 4;
+  --sobre-acento: #2a1004; --global-claro: #d9ccf3; --cluster-claro: #ffc2cd;
+  --grad-titulo: linear-gradient(90deg, #fff1e8 0%, #ffd27a 55%, #ff9fb0 100%);
+  --dialogo-bg: linear-gradient(155deg, #3a1630 0%, #4a1a30 55%, #5a1c2c 100%);
+
+  --f-texto: "Outfit", "Segoe UI", sans-serif;
+  --f-titulo: "Fraunces", Georgia, serif;
+  --f-mono: "DM Mono", ui-monospace, Consolas, monospace;
+  --r0: 5px; --r1: 10px; --r2: 16px; --r3: 18px; --r4: 22px; --blur: blur(12px);
+  --hex: none;
+}
+:root[data-tema="brasa"] #treemap { background:
+  radial-gradient(60% 55% at 90% 4%, rgba(var(--acento-rgb), 0.18), transparent 70%),
+  radial-gradient(60% 60% at 6% 100%, rgba(var(--cluster-rgb), 0.16), transparent 70%), var(--lienzo); }
+:root[data-tema="brasa"] #app::before { background: radial-gradient(circle, rgba(var(--acento-rgb), 0.3), transparent 65%); }
+:root[data-tema="brasa"] #app::after { background: radial-gradient(circle, rgba(var(--cluster-rgb), 0.3), transparent 65%); }
+:root[data-tema="brasa"] .cabecera h1 { font-weight: 700; font-variation-settings: "SOFT" 100, "WONK" 1; }
+:root[data-tema="brasa"] .cluster .fondo-cluster { fill: rgba(255, 220, 200, 0.05); stroke: rgba(255, 220, 200, 0.2); }
+:root[data-tema="brasa"] .cluster:hover .fondo-cluster { filter: drop-shadow(0 0 10px rgba(var(--acento-rgb), 0.6)); }
+
+/* --- Plano: cianotipo, líneas finas sobre azul de plano --------------------- */
+:root[data-tema="plano"] {
+  --fondo-a: #0a2a5c; --fondo-b: #0c3272; --fondo-c: #0a2a5c; --lienzo: #092553;
+  --vidrio: rgba(127, 214, 255, 0.05); --vidrio-fuerte: rgba(127, 214, 255, 0.13);
+  --borde: rgba(127, 214, 255, 0.42); --borde-suave: rgba(127, 214, 255, 0.2);
+  --trazo: rgba(127, 214, 255, 0.4); --trazo-fuerte: rgba(234, 243, 255, 0.9);
+  --texto: #eaf3ff; --texto-suave: rgba(222, 236, 255, 0.8); --texto-tenue: rgba(222, 236, 255, 0.56);
+
+  --teal: #7fd6ff; --teal-2: #b8e6ff;
+  --cluster: #ffc93c; --cluster-a: #ffd666; --cluster-2: #ff9f1c; --mixto: #ff6b9e; --global: #8fb3e8;
+  --acento-rgb: 127, 214, 255; --acento2-rgb: 184, 230, 255; --mixto-rgb: 255, 107, 158;
+  --cluster-rgb: 255, 201, 60; --cluster2-rgb: 255, 159, 28; --global-rgb: 143, 179, 232;
+  --panel-rgb: 5, 28, 70; --hondo-rgb: 4, 22, 58; --sombra-rgb: 2, 12, 34; --sobre-rgb: 4, 32, 74;
+  --sobre-acento: #04204a; --global-claro: #c4d8f5; --cluster-claro: #ffe49a;
+  --grad-titulo: linear-gradient(90deg, #eaf3ff, #eaf3ff);
+  --dialogo-bg: #0a2756;
+
+  --f-texto: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --f-titulo: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r0: 1px; --r1: 2px; --r2: 2px; --r3: 3px; --r4: 3px; --r-pill: 2px;
+  --blur: none; --brillos: 0;
+  --hex: linear-gradient(rgba(127, 214, 255, 0.09) 1px, transparent 1px) 0 0 / 24px 24px,
+         linear-gradient(90deg, rgba(127, 214, 255, 0.09) 1px, transparent 1px) 0 0 / 24px 24px;
+}
+:root[data-tema="plano"] body { background: var(--fondo-a); }
+:root[data-tema="plano"] .cabecera { background: rgba(var(--panel-rgb), 0.8); }
+:root[data-tema="plano"] .cabecera h1 { font-weight: 500; font-size: 1.2rem; letter-spacing: 0.01em; animation: none; }
+:root[data-tema="plano"] #treemap { box-shadow: none; background: var(--hex), var(--lienzo); border-style: dashed; }
+:root[data-tema="plano"] .cluster .fondo-cluster { fill: rgba(127, 214, 255, 0.04); stroke: rgba(127, 214, 255, 0.5); stroke-dasharray: 4 3; }
+:root[data-tema="plano"] .cluster.mixto .fondo-cluster { stroke-dasharray: none; fill: rgba(var(--mixto-rgb), 0.06); }
+:root[data-tema="plano"] .cluster:hover .fondo-cluster { filter: none; stroke-dasharray: none; }
+:root[data-tema="plano"] .cluster.mixto .fondo-cluster, :root[data-tema="plano"] .cluster.mixto:hover .fondo-cluster { filter: none; }
+:root[data-tema="plano"] .miniatura { box-shadow: none; }
+:root[data-tema="plano"] .miniatura:hover { box-shadow: none; }
+:root[data-tema="plano"] .barra-global { fill: rgba(var(--global-rgb), 0.35); stroke: rgba(var(--global-rgb), 0.9); stroke-width: 0.6; }
+:root[data-tema="plano"] .barra-cluster { opacity: 1; }
+:root[data-tema="plano"] .tarjeta { background: transparent; }
+:root[data-tema="plano"] .dock-vista { background: #06204a; box-shadow: none; border-color: var(--teal); }
+:root[data-tema="plano"] #dialogo-detalle { box-shadow: none; border-color: var(--teal); }
+:root[data-tema="plano"] .grafico-grande { background: rgba(var(--hondo-rgb), 0.7); }
+:root[data-tema="plano"] input[type="range"]::-webkit-slider-thumb { box-shadow: none; border-radius: 1px; }
+:root[data-tema="plano"] #boton-volver { box-shadow: none; }
+
+/* los contornos de hover y de cluster mixto se mantienen en todos los temas */
+:root[data-tema] .cluster:hover .fondo-cluster { stroke: var(--teal); stroke-dasharray: none; }
+:root[data-tema] .cluster.mixto .fondo-cluster,
+:root[data-tema] .cluster.mixto:hover .fondo-cluster { stroke: var(--mixto); stroke-dasharray: none; }

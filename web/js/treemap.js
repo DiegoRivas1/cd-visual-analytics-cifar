@@ -292,7 +292,7 @@
 
     function volverArriba() {
       nodoRaizVista = arbol;
-      estado.actualizar({ clusterSeleccionado: null });
+      estado.actualizar({ clusterSeleccionado: null, resaltado: null });
     }
 
     estado.suscribir(() => dibujar());
