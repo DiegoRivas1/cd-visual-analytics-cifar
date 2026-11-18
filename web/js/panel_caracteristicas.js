@@ -101,6 +101,11 @@
       const x = d3.scaleLinear().domain(a.dominio).range([m.l, w - m.r]);
       const hg = Estadisticas.histograma(a.g, a.dominio, N_BINS);
       const hc = Estadisticas.histograma(a.c, a.dominio, N_BINS);
+      const rangoCont = (b) => ({
+        variable: a.v, lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1],
+        nombre: `${g.nombre} ${Estadisticas.fmt(b.x0, 2)}–${Estadisticas.fmt(b.x1, 2)}`,
+        etiqueta: `${g.nombre} entre ${Estadisticas.fmt(b.x0, 2)} y ${Estadisticas.fmt(b.x1, 2)}`,
+      });
       const pMax = d3.max(hg.concat(hc), (b) => b.p) || 1;
       const y = d3.scaleLinear().domain([0, pMax]).nice().range([h - m.b, m.t]);
 
@@ -148,15 +153,9 @@
           .text("% de imágenes en cada casillero");
         // información al pasar el mouse sobre cada casillero
         svg.append("g").selectAll("rect").data(hg).join("rect").attr("class", "zona-hover")
-          .on("click", (_ev, b) => resaltar({
-            variable: a.v, nombre: `${g.nombre} ${Estadisticas.fmt(b.x0, 2)}–${Estadisticas.fmt(b.x1, 2)}`,
-            lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1] }))
-          .on("mouseenter", (_ev, b) => {
-            marcarBarra(svg, (d) => d.x0 === b.x0);
-            if (alPasarSobre) alPasarSobre({ variable: a.v, lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1],
-              etiqueta: `${g.nombre} entre ${Estadisticas.fmt(b.x0, 2)} y ${Estadisticas.fmt(b.x1, 2)}` });
-          })
-          .on("mouseleave", () => { marcarBarra(svg, null); if (alPasarSobre) alPasarSobre(null); })
+          .on("click", (_ev, b) => resaltar(rangoCont(b)))
+          .on("mouseenter", (_ev, b) => sobreBarra(svg, (d) => d.x0 === b.x0, rangoCont(b), true))
+          .on("mouseleave", () => sobreBarra(svg, null, null, true))
           .attr("x", (b) => x(b.x0)).attr("y", m.t).attr("width", (b) => Math.max(0, x(b.x1) - x(b.x0)))
           .attr("height", h - m.b - m.t)
           .append("title").text((b, i) =>
@@ -168,6 +167,8 @@
           .attr("text-anchor", "start").text(Estadisticas.fmt(a.dominio[0], 2));
         svg.append("text").attr("class", "etq-eje").attr("x", w - m.r).attr("y", h - 5)
           .attr("text-anchor", "end").text(Estadisticas.fmt(a.dominio[1], 2));
+        zonasMini(svg, hg, { x: (b) => x(b.x0), y: m.t, w: (b) => Math.max(0, x(b.x1) - x(b.x0)), h: h - m.b - m.t },
+          rangoCont, (b) => (d) => d.x0 === b.x0);
       }
     }
 
@@ -176,6 +177,10 @@
       const m = det ? { t: 22, r: 18, b: 64, l: 58 } : { t: 8, r: 4, b: 26, l: 4 };
       const cats = Categorias.CATEGORIAS_TONO;
       const x = d3.scaleBand().domain(cats).range([m.l, w - m.r]).padding(0.14);
+      const rangoTono = (d) => {
+        const n = `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}`;
+        return { variable: "tono_dominante", categoria: d.categoria, nombre: n, etiqueta: n };
+      };
       const pMax = d3.max(a.pg.concat(a.pc), (d) => d.p) || 1;
       const y = d3.scaleLinear().domain([0, pMax]).nice().range([h - m.b, m.t]);
 
@@ -210,21 +215,34 @@
           .attr("x", -(m.t + h - m.b) / 2).attr("y", 14).attr("text-anchor", "middle")
           .text("% de imágenes");
         svg.append("g").selectAll("rect").data(a.pg).join("rect").attr("class", "zona-hover")
-          .on("click", (_ev, d) => resaltar({
-            variable: "tono_dominante", categoria: d.categoria,
-            nombre: `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}` }))
-          .on("mouseenter", (_ev, d) => {
-            marcarBarra(svg, (x) => x.categoria === d.categoria);
-            if (alPasarSobre) alPasarSobre({ variable: "tono_dominante", categoria: d.categoria,
-              etiqueta: `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}` });
-          })
-          .on("mouseleave", () => { marcarBarra(svg, null); if (alPasarSobre) alPasarSobre(null); })
+          .on("click", (_ev, d) => resaltar(rangoTono(d)))
+          .on("mouseenter", (_ev, d) => sobreBarra(svg, (q) => q.categoria === d.categoria, rangoTono(d), true))
+          .on("mouseleave", () => sobreBarra(svg, null, null, true))
           .attr("x", (d) => x(d.categoria)).attr("y", m.t).attr("width", x.bandwidth())
           .attr("height", h - m.b - m.t)
           .append("title").text((d, i) =>
             `${Glosario.NOMBRES_SECTOR[d.categoria]}\n` +
             `Cluster: ${(a.pc[i].p * 100).toFixed(1)} %\nDataset: ${(d.p * 100).toFixed(1)} %`);
+      } else {
+        zonasMini(svg, a.pg, { x: (d) => x(d.categoria), y: m.t, w: x.bandwidth(), h: h - m.b - m.t },
+          rangoTono, (d) => (q) => q.categoria === d.categoria);
       }
+    }
+
+    // pasar el mouse por una barra: la destaca, atenúa el resto, marca las imágenes en el treemap
+    // y (en la ventana de detalle) muestra la galería de esa barra
+    function sobreBarra(svg, esActiva, r, detallado) {
+      marcarBarra(svg, esActiva);
+      if (estado.obtener().previa !== r) estado.actualizar({ previa: r });
+      if (detallado && alPasarSobre) alPasarSobre(r);
+    }
+
+    // zonas sensibles de las gráficas pequeñas (sin tooltip ni clic: el clic abre la ventana)
+    function zonasMini(svg, datos, geom, rangoDe, activaDe) {
+      svg.append("g").selectAll("rect").data(datos).join("rect").attr("class", "zona-hover")
+        .attr("x", geom.x).attr("y", geom.y).attr("width", geom.w).attr("height", geom.h)
+        .on("mouseenter", (_ev, d) => sobreBarra(svg, activaDe(d), rangoDe(d), false))
+        .on("mouseleave", () => sobreBarra(svg, null, null, false));
     }
 
     // la barra bajo el mouse queda destacada y las demás se atenúan
@@ -233,11 +251,9 @@
       svg.selectAll('rect[class*="barra-"]').classed("activa", (d) => (esActiva ? esActiva(d) : false));
     }
 
-    // clic en una barra: resalta esas imágenes en el treemap y cierra la ventana
+    // clic en una barra: deja fijas esas imágenes resaltadas en el treemap
     function resaltar(r) {
-      estado.actualizar({ resaltado: r });
-      const nodo = dialogo.node();
-      if (nodo && nodo.open) nodo.close();
+      estado.actualizar({ resaltado: r }); // el panel lateral sigue abierto: el treemap se ve completo
     }
 
     function dibujarGrafico(svg, a, o) {
@@ -462,7 +478,7 @@
       const izq = cuerpo.append("div").attr("class", "dlg-grafico");
       leyenda(izq, a.tipo === "cat");
       const svg = izq.append("svg").attr("class", "grafico-grande");
-      dibujarGrafico(svg, a, { ancho: 640, alto: a.tipo === "cat" ? 360 : 340, detallado: true });
+      dibujarGrafico(svg, a, { ancho: 520, alto: a.tipo === "cat" ? 330 : 290, detallado: true });
       const galeria = izq.append("div").attr("class", "galeria");
       const galHead = galeria.append("div").attr("class", "gal-cab");
       const galGrid = galeria.append("div").attr("class", "gal-grid");
@@ -492,7 +508,7 @@
           .style("background-position", (id) => { const h = porId.get(id); return h && h.sprite ? `${-h.sprite.x_px * f}px ${-h.sprite.y_px * f}px` : "0 0"; });
         if (!muestra.length) galGrid.append("span").attr("class", "gal-vacio").text("Ninguna imagen del cluster cae en este rango.");
       };
-      izq.append("p").attr("class", "ayuda-hover").text("Pasá el mouse sobre una barra para ver los valores exactos. Hacé clic en una barra para resaltar esas imágenes en el treemap.");
+      izq.append("p").attr("class", "ayuda-hover").text("Al pasar el mouse por una barra, esas imágenes se marcan en el treemap. Un clic las deja fijas.");
 
       const der = cuerpo.append("div").attr("class", "dlg-texto");
       seccion(der, "Qué mide", g.queMide);
@@ -517,9 +533,26 @@
       }
       if (g.nota) seccion(der, "Para tener en cuenta", g.nota);
 
-      nodo.showModal();
+      nodo.style.setProperty("--alto-cab", `${document.querySelector(".cabecera").offsetHeight}px`);
+      if (!nodo.open) nodo.show(); // panel lateral (no modal): el treemap sigue visible y activo
+      const cuerpoApp = document.getElementById("cuerpo");
+      if (cuerpoApp && !cuerpoApp.classList.contains("con-detalle")) {
+        cuerpoApp.classList.add("con-detalle");
+      }
       // la marca del medidor viaja a su posición una vez abierta la ventana
       setTimeout(() => dialogo.selectAll(".medidor-marca").style("left", function () { return this.dataset.pos + "%"; }), 260);
+    }
+
+    if (dialogo.node()) {
+      dialogo.on("close.limpiar", () => {
+        alPasarSobre = null;
+        if (estado.obtener().previa) estado.actualizar({ previa: null });
+        const cuerpoApp = document.getElementById("cuerpo");
+        if (cuerpoApp) cuerpoApp.classList.remove("con-detalle");
+      });
+      document.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape" && dialogo.node().open) dialogo.node().close();
+      });
     }
 
     if (dialogo.node()) {

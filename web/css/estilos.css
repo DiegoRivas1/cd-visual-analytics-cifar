@@ -456,8 +456,8 @@ foreignObject { overflow: visible; }
 .leyenda span { transition: color 0.2s; }
 
 /* barra activa del histograma */
-.grafico-grande.hay-activa rect[class*="barra-"] { opacity: 0.32; transition: opacity 0.18s, filter 0.18s; }
-.grafico-grande.hay-activa rect[class*="barra-"].activa { opacity: 1; filter: brightness(1.18) drop-shadow(0 0 7px rgba(var(--cluster-rgb), 0.7)); }
+svg.hay-activa rect[class*="barra-"] { opacity: 0.32; transition: opacity 0.18s, filter 0.18s; }
+svg.hay-activa rect[class*="barra-"].activa { opacity: 1; filter: brightness(1.18) drop-shadow(0 0 7px rgba(var(--cluster-rgb), 0.7)); }
 .grafico-grande .zona-hover:hover { fill: rgba(var(--acento-rgb), 0.1); }
 
 /* galería de imágenes de la barra bajo el mouse */
@@ -491,3 +491,27 @@ foreignObject { overflow: visible; }
 .tarjeta:hover .tarjeta-nombre { color: var(--teal); transform: translateX(2px); }
 .tarjeta:hover .barra-cluster { filter: brightness(1.15); }
 .tarjeta:active { transform: scale(0.99); }
+
+/* --- ventana de detalle como panel lateral (no tapa el treemap) ---------------- */
+:root { --ancho-detalle: clamp(420px, 36vw, 540px); }
+#cuerpo.con-detalle { grid-template-columns: 252px minmax(0, 1fr) var(--ancho-detalle); }
+#dialogo-detalle {
+  position: fixed; inset: auto; top: var(--alto-cab, 68px); right: 0; bottom: 0; left: auto; margin: 0;
+  width: var(--ancho-detalle); max-width: 100vw; height: calc(100vh - var(--alto-cab, 68px)); max-height: none;
+  border-width: 0 0 0 1px; border-radius: var(--r3) 0 0 0; z-index: 40;
+}
+#dialogo-detalle[open] { animation: entrar-lateral 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes entrar-lateral { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; } }
+.dlg-marco { height: 100%; max-height: none; }
+.dlg-cuerpo { grid-template-columns: minmax(0, 1fr); gap: 0.9rem; flex: 1; min-height: 0; }
+.dlg-cab { padding: 0.7rem 1rem; }
+.dlg-cuerpo { padding: 0.9rem 1rem 1.2rem; }
+.chip-resaltado.chip-previa { animation: none; background: rgba(var(--cluster-rgb), 0.95); color: var(--sobre-acento); box-shadow: 0 4px 18px rgba(var(--cluster-rgb), 0.45); }
+@media (max-width: 900px) {
+  #cuerpo.con-detalle { grid-template-columns: 1fr; }
+  #dialogo-detalle { width: 100vw; border-radius: 0; }
+}
+.dlg-cuerpo, .dlg-texto { grid-auto-rows: max-content; }
+.dlg-cuerpo { align-content: start; }
+.dlg-grafico, .dlg-texto section { flex: none; }
+.chip-resaltado { top: auto; right: auto; bottom: 10px; left: 10px; }

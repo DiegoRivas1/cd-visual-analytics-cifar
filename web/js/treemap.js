@@ -70,8 +70,11 @@
 
     function anclarDock() {
       const p = document.getElementById("panel-caracteristicas");
+      const det = document.getElementById("dialogo-detalle");
       const r = p ? p.getBoundingClientRect() : { left: window.innerWidth - 320, width: 310 };
-      dock.style("left", `${r.left + 10}px`).style("width", `${r.width - 20}px`);
+      // con el panel de detalle abierto, el dock se mueve a su costado (sobre el treemap)
+      if (det && det.open) dock.style("left", `${Math.max(8, r.left - 300)}px`).style("width", "290px");
+      else dock.style("left", `${r.left + 10}px`).style("width", `${r.width - 20}px`);
     }
 
     function ocultarDock() {
@@ -169,13 +172,30 @@
 
     function dibujarChip() {
       contenedor.select(".chip-resaltado").remove();
-      const r = estado.obtener().resaltado;
+      const e = estado.obtener();
+      const r = e.previa || e.resaltado;
       if (!r) return;
       const cuantas = todasHojas.filter((x) => pasaResaltado(x, r)).length;
-      const chip = contenedor.append("div").attr("class", "chip-resaltado");
-      chip.append("span").text(`Resaltando · ${r.nombre} · ${cuantas} imágenes (${Math.round((100 * cuantas) / todasHojas.length)} %)`);
-      chip.append("button").attr("type", "button").attr("aria-label", "Quitar resaltado").text("×")
-        .on("click", () => estado.actualizar({ resaltado: null }));
+      const chip = contenedor.append("div").attr("class", "chip-resaltado" + (e.previa ? " chip-previa" : ""));
+      chip.append("span").text(`${e.previa ? "Vista previa" : "Resaltando"} · ${r.nombre} · ${cuantas} imágenes (${Math.round((100 * cuantas) / todasHojas.length)} %)`);
+      if (!e.previa) {
+        chip.append("button").attr("type", "button").attr("aria-label", "Quitar resaltado").text("×")
+          .on("click", () => estado.actualizar({ resaltado: null }));
+      }
+    }
+
+    // actualización liviana: solo cambia qué miniaturas se atenúan (sin recalcular el layout)
+    const hojaPorId = new Map(todasHojas.map((x) => [x.img_id, x]));
+    function atenuar() {
+      const e = estado.obtener();
+      const r = e.previa || e.resaltado;
+      contenedor.selectAll("div.miniatura").classed("fuera-de-filtro", (id) => {
+        const hoja = hojaPorId.get(id);
+        if (!hoja) return false;
+        if (!pasaResaltado(hoja, r)) return true;
+        return !!(e.filtros && typeof pasaFiltros === "function" && !pasaFiltros(hoja, e.filtros));
+      });
+      dibujarChip();
     }
 
     function dibujar() {
@@ -240,7 +260,7 @@
         const porId = new Map(hojasVisibles.map((x) => [x.img_id, x]));
         const factor = rej.lado / ladoNativo;
         const filtros = estado.obtener().filtros;
-        const resaltado = estado.obtener().resaltado;
+        const resaltado = estado.obtener().previa || estado.obtener().resaltado;
 
         const grupoMin = grupo.select("g.miniaturas");
         const sel = grupoMin.selectAll("foreignObject").data(muestra, (id) => id);
@@ -295,8 +315,21 @@
       estado.actualizar({ clusterSeleccionado: null, resaltado: null });
     }
 
-    estado.suscribir(() => dibujar());
-    window.addEventListener("resize", dibujar);
+    let previaAnterior = estado.obtener().previa;
+    estado.suscribir(() => {
+      const p = estado.obtener().previa;
+      if (p !== previaAnterior) { previaAnterior = p; atenuar(); return; }
+      dibujar();
+    });
+    // también cuando cambia el tamaño del contenedor (p. ej. al abrir el panel de detalle)
+    let pendiente = null, anchoPrevio = 0;
+    new ResizeObserver(() => {
+      const w = contenedor.node().clientWidth;
+      if (w === anchoPrevio) return;
+      anchoPrevio = w;
+      clearTimeout(pendiente);
+      pendiente = setTimeout(dibujar, 60);
+    }).observe(contenedor.node());
     dibujar();
 
     return { dibujar, volverArriba };
