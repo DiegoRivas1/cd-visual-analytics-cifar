@@ -13,6 +13,7 @@
       ladoMiniatura: 32,
       clusterSeleccionado: null, // nodo del árbol actualmente enfocado (zoom)
       filtros: {}, // { nombreVariable: [min, max] }
+      resaltado: null, // { variable, nombre, lo, hi, ultimo } o { variable, categoria, nombre }: imágenes a resaltar
     };
     const suscriptores = [];
 

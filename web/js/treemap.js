@@ -59,69 +59,128 @@
       ];
     }
 
-    // ---- vista previa al pasar el mouse: composición por clase + más imágenes del cluster ----
-    const VP_LADO = 24, VP_COLS = 10, VP_MAX = 120, VP_CLASES = 6;
-    const vista = d3.select("body").append("div").attr("class", "vista-previa").attr("aria-hidden", "true");
-    let temporizador = null, ultimoEv = null;
+    // ---- dock fijo (columna derecha): resumen del cluster o ficha de la imagen bajo el mouse ----
+    const DK_LADO = 30, DK_MAX = 180, DK_FILAS = 3, DK_CLASES = 6;
+    const VARS_IMG = ["brillo", "contraste", "saturacion", "entropia", "densidad_bordes", "unif_fondo", "energia_central"];
+    const todasHojas = hojasDe(arbol);
+    const rangosImg = {};
+    for (const v of VARS_IMG) rangosImg[v] = d3.extent(todasHojas, (x) => x[v]);
+    const dock = d3.select("body").append("div").attr("class", "dock-vista").attr("aria-hidden", "true");
+    let temporizador = null;
 
-    function ocultarVista() {
+    function anclarDock() {
+      const p = document.getElementById("panel-caracteristicas");
+      const r = p ? p.getBoundingClientRect() : { left: window.innerWidth - 320, width: 310 };
+      dock.style("left", `${r.left + 10}px`).style("width", `${r.width - 20}px`);
+    }
+
+    function ocultarDock() {
       clearTimeout(temporizador);
-      vista.classed("visible", false);
+      dock.classed("visible", false);
     }
 
-    function colocarVista(ev) {
-      const r = vista.node().getBoundingClientRect();
-      let x = ev.clientX + 18, y = ev.clientY + 18;
-      if (x + r.width > window.innerWidth - 8) x = ev.clientX - r.width - 18;
-      if (y + r.height > window.innerHeight - 8) y = window.innerHeight - r.height - 8;
-      vista.style("left", Math.max(8, x) + "px").style("top", Math.max(8, y) + "px");
+    function fondoAtlas(hoja, lado) {
+      const factor = lado / ladoNativo;
+      return {
+        "background-image": `url(${atlasSrc})`,
+        "background-size": `${ladoAtlas * factor}px ${ladoAtlas * factor}px`,
+        "background-position": hoja && hoja.sprite ? `${-hoja.sprite.x_px * factor}px ${-hoja.sprite.y_px * factor}px` : "0 0",
+      };
     }
 
-    function mostrarVista(d) {
+    function mostrarCluster(d) {
       const hojas = hojasDe(d.nodo);
       if (hojas.length < 2) return;
       const n = hojas.length;
       const dom = Estadisticas.dominante(hojas.map((x) => x.clase));
       const conteo = d3.rollups(hojas, (v) => v.length, (x) => x.clase).sort((p, q) => q[1] - p[1]);
-      vista.selectAll("*").remove();
+      anclarDock();
+      dock.selectAll("*").remove();
 
-      const cab = vista.append("div").attr("class", "vp-cab");
+      const cab = dock.append("div").attr("class", "vp-cab");
       cab.append("strong").text(`${n} imágenes`);
       if (dom && dom.p < UMBRAL_MIXTO) cab.append("span").attr("class", "tag-mixto").text("mixto");
 
-      const clases = vista.append("div").attr("class", "vp-clases");
-      for (const [clase, c] of conteo.slice(0, VP_CLASES)) {
+      const clases = dock.append("div").attr("class", "vp-clases");
+      for (const [clase, c] of conteo.slice(0, DK_CLASES)) {
         const f = clases.append("div").attr("class", "vp-fila");
         f.append("span").text(clase);
         f.append("span").attr("class", "vp-barra").append("i").style("width", `${(100 * c) / n}%`);
         f.append("span").attr("class", "vp-pct").text(`${Math.round((100 * c) / n)} %`);
       }
-      if (conteo.length > VP_CLASES) {
-        clases.append("div").attr("class", "vp-mas").text(`+ ${conteo.length - VP_CLASES} clases más`);
-      }
+      if (conteo.length > DK_CLASES) clases.append("div").attr("class", "vp-mas").text(`+ ${conteo.length - DK_CLASES} clases más`);
 
+      // las imágenes se deslizan de izquierda a derecha: así se ven también las que no caben
       const porId = new Map(hojas.map((x) => [x.img_id, x]));
-      const muestra = Layout.muestrearHasta(hojas.map((x) => x.img_id), VP_MAX);
-      const factor = VP_LADO / ladoNativo;
-      vista.append("div").attr("class", "vp-grid")
-        .style("grid-template-columns", `repeat(${VP_COLS}, ${VP_LADO}px)`)
-        .selectAll("div").data(muestra).join("div").attr("class", "vp-img")
-        .style("background-image", `url(${atlasSrc})`)
-        .style("background-size", `${ladoAtlas * factor}px ${ladoAtlas * factor}px`)
-        .style("background-position", (id) => {
-          const hoja = porId.get(id);
-          return hoja && hoja.sprite ? `${-hoja.sprite.x_px * factor}px ${-hoja.sprite.y_px * factor}px` : "0 0";
-        });
-
-      vista.append("div").attr("class", "vp-pie").text(
+      const muestra = Layout.muestrearHasta(hojas.map((x) => x.img_id), DK_MAX);
+      const porFila = Math.ceil(muestra.length / DK_FILAS);
+      for (let f = 0; f < DK_FILAS; f++) {
+        const ids = muestra.slice(f * porFila, (f + 1) * porFila);
+        if (!ids.length) continue;
+        const pista = dock.append("div").attr("class", "vp-carril").append("div").attr("class", "vp-pista")
+          .style("--dur", `${Math.max(8, ids.length * (0.55 + 0.12 * f))}s`);
+        for (const id of ids.concat(ids)) {
+          const el = pista.append("div").attr("class", "vp-img");
+          for (const [k, v] of Object.entries(fondoAtlas(porId.get(id), DK_LADO))) el.style(k, v);
+        }
+      }
+      dock.append("div").attr("class", "vp-pie").text(
         (n > muestra.length ? `Muestra de ${muestra.length} de ${n} imágenes` : `Las ${n} imágenes`) +
         (d.nodo.hoja ? "" : " · clic para acercarte"));
-      colocarVista(ultimoEv);
-      vista.classed("visible", true);
+      dock.classed("visible", true);
+    }
+
+    function mostrarImagen(hoja) {
+      if (!hoja) return;
+      clearTimeout(temporizador);
+      anclarDock();
+      dock.selectAll("*").remove();
+      const cab = dock.append("div").attr("class", "vp-img-cab");
+      const grande = cab.append("div").attr("class", "vp-grande");
+      for (const [k, v] of Object.entries(fondoAtlas(hoja, 96))) grande.style(k, v);
+      const t = cab.append("div");
+      t.append("strong").text(hoja.clase);
+      t.append("div").attr("class", "vp-pie").text(`imagen #${hoja.img_id}`);
+
+      const tabla = dock.append("div").attr("class", "vp-valores");
+      for (const v of VARS_IMG) {
+        const [lo, hi] = rangosImg[v];
+        const fila = tabla.append("div").attr("class", "vp-fila vp-fila-val");
+        fila.append("span").text(Glosario.GLOSARIO[v].nombre);
+        fila.append("span").attr("class", "vp-barra").append("i").style("width", `${(100 * (hoja[v] - lo)) / (hi - lo || 1)}%`);
+        fila.append("span").attr("class", "vp-pct").text(hoja[v].toFixed(2));
+      }
+      const tono = hoja.tono_dominante;
+      const nombreTono = Glosario.NOMBRES_SECTOR[tono];
+      tabla.append("div").attr("class", "vp-tono").text(
+        `Tono dominante: ${Categorias.etiquetaTono(tono) === "ac." ? "acromático" : "sector " + tono}${nombreTono ? " · " + nombreTono : ""}`);
+      dock.append("div").attr("class", "vp-pie").text("La barra ubica el valor dentro del rango de todo el dataset.");
+      dock.classed("visible", true);
+    }
+
+    // ---- resaltado desde un histograma ----
+    function pasaResaltado(hoja, r) {
+      if (!r) return true;
+      const x = hoja[r.variable];
+      if (x == null) return false;
+      if (r.categoria != null) return x === r.categoria;
+      return x >= r.lo && (x < r.hi || (r.ultimo && x <= r.hi));
+    }
+
+    function dibujarChip() {
+      contenedor.select(".chip-resaltado").remove();
+      const r = estado.obtener().resaltado;
+      if (!r) return;
+      const cuantas = todasHojas.filter((x) => pasaResaltado(x, r)).length;
+      const chip = contenedor.append("div").attr("class", "chip-resaltado");
+      chip.append("span").text(`Resaltando · ${r.nombre} · ${cuantas} imágenes (${Math.round((100 * cuantas) / todasHojas.length)} %)`);
+      chip.append("button").attr("type", "button").attr("aria-label", "Quitar resaltado").text("×")
+        .on("click", () => estado.actualizar({ resaltado: null }));
     }
 
     function dibujar() {
-      ocultarVista();
+      ocultarDock();
+      dibujarChip();
       const { w, h } = dimensiones();
       svg.attr("viewBox", `0 0 ${w} ${h}`);
       const k = estado.obtener().k;
@@ -181,6 +240,7 @@
         const porId = new Map(hojasVisibles.map((x) => [x.img_id, x]));
         const factor = rej.lado / ladoNativo;
         const filtros = estado.obtener().filtros;
+        const resaltado = estado.obtener().resaltado;
 
         const grupoMin = grupo.select("g.miniaturas");
         const sel = grupoMin.selectAll("foreignObject").data(muestra, (id) => id);
@@ -206,9 +266,13 @@
           })
           .classed("fuera-de-filtro", (id) => {
             const hoja = porId.get(id);
-            if (!hoja || !filtros || typeof pasaFiltros !== "function") return false;
+            if (!hoja) return false;
+            if (!pasaResaltado(hoja, resaltado)) return true;
+            if (!filtros || typeof pasaFiltros !== "function") return false;
             return !pasaFiltros(hoja, filtros);
-          });
+          })
+          .on("mouseenter", (_ev, id) => mostrarImagen(porId.get(id)))
+          .on("mouseleave", () => { clearTimeout(temporizador); temporizador = setTimeout(() => mostrarCluster(d), 60); });
       });
 
       todos
@@ -218,17 +282,12 @@
           nodoRaizVista = d.nodo;
           estado.actualizar({ clusterSeleccionado: d.nodo });
         })
-        .on("mouseenter", function (ev, d) {
+        .on("mouseenter", function (_ev, d) {
           d3.select(this).raise();
-          ultimoEv = ev;
           clearTimeout(temporizador);
-          temporizador = setTimeout(() => mostrarVista(d), 260);
+          temporizador = setTimeout(() => mostrarCluster(d), 260);
         })
-        .on("mousemove", (ev) => {
-          ultimoEv = ev;
-          if (vista.classed("visible")) colocarVista(ev);
-        })
-        .on("mouseleave", ocultarVista);
+        .on("mouseleave", ocultarDock);
     }
 
     function volverArriba() {

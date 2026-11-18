@@ -147,6 +147,9 @@
           .text("% de imágenes en cada casillero");
         // información al pasar el mouse sobre cada casillero
         svg.append("g").selectAll("rect").data(hg).join("rect").attr("class", "zona-hover")
+          .on("click", (_ev, b) => resaltar({
+            variable: a.v, nombre: `${g.nombre} ${Estadisticas.fmt(b.x0, 2)}–${Estadisticas.fmt(b.x1, 2)}`,
+            lo: b.x0, hi: b.x1, ultimo: b === hg[hg.length - 1] }))
           .attr("x", (b) => x(b.x0)).attr("y", m.t).attr("width", (b) => Math.max(0, x(b.x1) - x(b.x0)))
           .attr("height", h - m.b - m.t)
           .append("title").text((b, i) =>
@@ -200,12 +203,22 @@
           .attr("x", -(m.t + h - m.b) / 2).attr("y", 14).attr("text-anchor", "middle")
           .text("% de imágenes");
         svg.append("g").selectAll("rect").data(a.pg).join("rect").attr("class", "zona-hover")
+          .on("click", (_ev, d) => resaltar({
+            variable: "tono_dominante", categoria: d.categoria,
+            nombre: `Tono ${Categorias.etiquetaTono(d.categoria) === "ac." ? "acromático" : "sector " + d.categoria}` }))
           .attr("x", (d) => x(d.categoria)).attr("y", m.t).attr("width", x.bandwidth())
           .attr("height", h - m.b - m.t)
           .append("title").text((d, i) =>
             `${Glosario.NOMBRES_SECTOR[d.categoria]}\n` +
             `Cluster: ${(a.pc[i].p * 100).toFixed(1)} %\nDataset: ${(d.p * 100).toFixed(1)} %`);
       }
+    }
+
+    // clic en una barra: resalta esas imágenes en el treemap y cierra la ventana
+    function resaltar(r) {
+      estado.actualizar({ resaltado: r });
+      const nodo = dialogo.node();
+      if (nodo && nodo.open) nodo.close();
     }
 
     function dibujarGrafico(svg, a, o) {
@@ -409,7 +422,7 @@
       leyenda(izq, a.tipo === "cat");
       const svg = izq.append("svg").attr("class", "grafico-grande");
       dibujarGrafico(svg, a, { ancho: 640, alto: a.tipo === "cat" ? 360 : 340, detallado: true });
-      izq.append("p").attr("class", "ayuda-hover").text("Pasá el mouse sobre una barra para ver los valores exactos.");
+      izq.append("p").attr("class", "ayuda-hover").text("Pasá el mouse sobre una barra para ver los valores exactos. Hacé clic en una barra para resaltar esas imágenes en el treemap.");
 
       const der = cuerpo.append("div").attr("class", "dlg-texto");
       seccion(der, "Qué mide", g.queMide);
